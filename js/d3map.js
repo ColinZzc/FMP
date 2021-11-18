@@ -128,12 +128,15 @@ export default class Map {
         if (points.empty()) {
             points = svg.append("g").attr("class", "points");
         }
-        points.selectAll("circle")
+        let circles = points.selectAll("circle")
             .data(data)
-            .enter()
+
+        let new_circle = circles.enter()
             .append("circle")
             .attr("r", 1)
             .attr("fill-opacity", 1)
+
+        circles.merge(new_circle)
             .attr("fill", function (d) {
                 return d3.interpolateRdBu(linear(d[featureName]))
             })

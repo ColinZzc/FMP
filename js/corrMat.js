@@ -6,12 +6,26 @@ let matArea = document.getElementById("corrMat")
 let meteorology = ["temp", "rh", "psfc"]
 let pollution = ["pm25", "pm10", "so2", "no2", "co", "o3"]
 
+let row = document.createElement("div")
+    row.style.display = "grid"
+    row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
+    matArea.appendChild(row)
+let blank = document.createElement("div")
+row.appendChild(blank)
+for (const pollutionkey of pollution) {
+    let temp = document.createElement("text")
+    temp.textContent = pollutionkey
+    row.appendChild(temp)
+}
 for (const meteorologyKey of meteorology) {
     let row = document.createElement("div")
     row.style.display = "grid"
-    row.style['grid-template-columns'] = "auto auto auto auto auto auto"
+    row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
     matArea.appendChild(row)
+    let icon = document.createElement("text")
+    row.appendChild(icon)
     for (const pollutionKey of pollution) {
+        if (icon.textContent==="") icon.textContent = meteorologyKey;
         let box = document.createElement("div")
         // box.onclick(showOnMap)
         row.appendChild(box)
