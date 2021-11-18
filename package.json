@@ -1,0 +1,16 @@
+{
+  "name": "fmp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./templates/test.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "lite-server"
+  },
+  "author": "colin",
+  "license": "ISC",
+  "dependencies": {
+    "echarts": "^5.2.2",
+    "lite-server": "^2.6.1"
+  }
+}
