@@ -38,7 +38,7 @@ export default class DB {
     }
 
     async get_bucket_by_feature_year(feature, year) {
-        let key = "bucket_" + feature
+        let key = "bucket_" + feature+"_"+year
         if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
             this._loadingList.add(key)
             this._cache[key] = await this.get_bucket_from_server(feature, year)

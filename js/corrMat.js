@@ -42,22 +42,7 @@ export function corrMat(div, feature, year) {
         .then(data => {
             if (data) {
                 let lc = LineChart(data, {
-                    x: d => d.bucketid,
-                    y: d => d.bucket_count,
-                    z: d => d.month,
-                     chartID: feature,
-                    yDomain: [0, 2000],
-                    width: 300, // outer width, in pixels
-                    height: 150, // outer height, in pixels
-                    onClick: showOnMap,
-                    color: d3.scaleOrdinal()
-                        // 天文学上以春分、夏至、秋分、冬至分别作为春、夏、秋、冬四季的开始
-                        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
-                        //The green is for spring, yellow for the summer sun, orange for autumn and blue for winter.
-                        .range(["#A7FC01", "#A7FC01", "#A7FC01",
-                            "#FFFE00", "#FFFE00", "#FFFE00",
-                            "#FF7F00", "#FF7F00", "#FF7F00",
-                            "#01BFFF", "#01BFFF", "#01BFFF"])
+                    chartID: feature,
                 })
                 div.appendChild(lc)
             }
@@ -66,15 +51,19 @@ export function corrMat(div, feature, year) {
 
 export function updateMat(year) {
     console.log(year)
-    let matList = d3.selectAll(".matBox")._groups[0]
+    // let matList = d3.selectAll(".matBox")
+    let matList = document.getElementsByClassName("matBox")
     for (const matListElement of matList) {
         let feature = matListElement.id
         airDB.get_bucket_by_feature_year(feature, year)
-        .then(data => {
-            if (data) {
-
-            }
-        })
+            .then(data => {
+                if (data) {
+                    LineChart(data, {
+                        chartID: feature,
+                        svg: d3.select("#"+feature).select("svg")
+                    })
+                }
+            })
     }
 
 }

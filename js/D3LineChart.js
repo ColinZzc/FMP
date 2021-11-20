@@ -3,10 +3,12 @@
 // https://observablehq.com/@d3/multi-line-chart
 
 
+import {showOnMap} from "./chineseMap.js";
+
 export function LineChart(data, {
-    x = ([x]) => x, // given d in data, returns the (temporal) x-value
-    y = ([, y]) => y, // given d in data, returns the (quantitative) y-value
-    z = () => 1, // given d in data, returns the (categorical) z-value
+    x = d => d.bucketid, // given d in data, returns the (temporal) x-value
+    y = d => d.bucket_count, // given d in data, returns the (quantitative) y-value
+    z = d => d.month, // given d in data, returns the (categorical) z-value
     title, // given d in data, returns the title text
     defined, // for gaps in data
     curve = d3.curveLinear, // method of interpolation between points
@@ -14,18 +16,25 @@ export function LineChart(data, {
     marginRight = 30, // right margin, in pixels
     marginBottom = 30, // bottom margin, in pixels
     marginLeft = 40, // left margin, in pixels
-    width = 640, // outer width, in pixels
-    height = 400, // outer height, in pixels
+    width = 300, // outer width, in pixels
+    height = 150, // outer height, in pixels
     xType = d3.scaleUtc, // type of x-scale
     xDomain, // [xmin, xmax]
     xRange = [marginLeft, width - marginRight], // [left, right]
     yType = d3.scaleLinear, // type of y-scale
-    yDomain, // [ymin, ymax]
+    yDomain = [0, 2000], // [ymin, ymax]
     yRange = [height - marginBottom, marginTop], // [bottom, top]
     yFormat, // a format specifier string for the y-axis
     yLabel, // a label for the y-axis
     zDomain, // array of z-values
-    color = "currentColor", // stroke color of line
+    color = d3.scaleOrdinal()
+        // 天文学上以春分、夏至、秋分、冬至分别作为春、夏、秋、冬四季的开始
+        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
+        //The green is for spring, yellow for the summer sun, orange for autumn and blue for winter.
+        .range(["#A7FC01", "#A7FC01", "#A7FC01",
+            "#FFFE00", "#FFFE00", "#FFFE00",
+            "#FF7F00", "#FF7F00", "#FF7F00",
+            "#01BFFF", "#01BFFF", "#01BFFF"]), // stroke color of line
     strokeLinecap, // stroke line cap of line
     strokeLinejoin, // stroke line join of line
     strokeWidth = 1.5, // stroke width of line
@@ -33,8 +42,11 @@ export function LineChart(data, {
     mixBlendMode = "multiply", // blend mode of lines
     voronoi, // show a Voronoi overlay? (for debugging)
     chartID,
-    onClick
+    onClick = showOnMap,
+    svg
 } = {}) {
+
+
     // Compute values.
     const X = d3.map(data, x);
     const Y = d3.map(data, y);
@@ -70,74 +82,83 @@ export function LineChart(data, {
         .x(i => xScale(X[i]))
         .y(i => yScale(Y[i]));
 
-    const svg = d3.create("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", [0, 0, width, height])
-        .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
-        .style("-webkit-tap-highlight-color", "transparent")
-        .on("pointerenter", pointerentered)
-        .on("pointermove", pointermoved)
-        .on("pointerleave", pointerleft)
-        .on("touchstart", event => event.preventDefault())
-        .on("click", pointerClicked);
+    let path = null;
+    let dot = null;
+    if (typeof svg == "undefined" || svg.empty()) {
+        svg = d3.create("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", [0, 0, width, height])
+            .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
+            .style("-webkit-tap-highlight-color", "transparent")
+            .on("pointerenter", pointerentered)
+            .on("pointermove", pointermoved)
+            .on("pointerleave", pointerleft)
+            .on("touchstart", event => event.preventDefault())
+            .on("click", pointerClicked);
 
-    // An optional Voronoi display (for fun).
-    if (voronoi) svg.append("path")
-        .attr("fill", "none")
-        .attr("stroke", "#ccc")
-        .attr("d", d3.Delaunay
-            .from(I, i => xScale(X[i]), i => yScale(Y[i]))
-            .voronoi([0, 0, width, height])
-            .render());
+        svg.append("g")
+            .attr("transform", `translate(0,${height - marginBottom})`)
+            .call(xAxis);
 
-    svg.append("g")
-        .attr("transform", `translate(0,${height - marginBottom})`)
-        .call(xAxis);
+        svg.append("g")
+            .attr("transform", `translate(${marginLeft},0)`)
+            .call(yAxis)
+            .call(g => g.select(".domain").remove())
+            .call(voronoi ? () => {
+            } : g => g.selectAll(".tick line").clone()
+                .attr("x2", width - marginLeft - marginRight)
+                .attr("stroke-opacity", 0.1))
+            .call(g => g.append("text")
+                .attr("x", -marginLeft)
+                .attr("y", 10)
+                .attr("fill", "currentColor")
+                .attr("text-anchor", "start")
+                .text(yLabel));
 
-    svg.append("g")
-        .attr("transform", `translate(${marginLeft},0)`)
-        .call(yAxis)
-        .call(g => g.select(".domain").remove())
-        .call(voronoi ? () => {
-        } : g => g.selectAll(".tick line").clone()
-            .attr("x2", width - marginLeft - marginRight)
-            .attr("stroke-opacity", 0.1))
-        .call(g => g.append("text")
-            .attr("x", -marginLeft)
-            .attr("y", 10)
-            .attr("fill", "currentColor")
-            .attr("text-anchor", "start")
-            .text(yLabel));
+        path = svg.append("g")
+            .attr("fill", "none")
+            .attr("stroke-linecap", strokeLinecap)
+            .attr("stroke-linejoin", strokeLinejoin)
+            .attr("stroke-width", strokeWidth)
+            .attr("stroke-opacity", strokeOpacity)
+            .selectAll("path")
 
-    const path = svg.append("g")
-        .attr("fill", "none")
-        .attr("stroke-linecap", strokeLinecap)
-        .attr("stroke-linejoin", strokeLinejoin)
-        .attr("stroke-width", strokeWidth)
-        .attr("stroke-opacity", strokeOpacity)
-        .selectAll("path")
-        .data(d3.group(I, i => Z[i]))
-        .join("path")
-        .style("mix-blend-mode", mixBlendMode)
-        // .attr("stroke", color)
-        .attr("stroke", d => {
-            // console.log(color(d[0].slice(-2)));
-            return color(d[0].slice(-2))
+        dot = svg.append("g")
+            .attr("display", "none");
+
+        dot.append("circle")
+            .attr("r", 2.5);
+
+        dot.append("text")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", 10)
+            .attr("text-anchor", "middle")
+            .attr("y", -8);
+    }
+
+    if (path==null) {
+        let gs = svg.selectAll("g")
+        path = gs.filter(function (d, i) {
+            //d 不明物体 可以为null
+            return i===10
         })
-        .attr("d", ([, I]) => line(I));
+        path = path.selectAll("path")
+    }
 
-    const dot = svg.append("g")
-        .attr("display", "none");
+    path.data(d3.group(I, i => Z[i]))
+            .join("path")
+            .style("mix-blend-mode", mixBlendMode)
+            .attr("stroke", d => {
+                // console.log(color(d[0].slice(-2)));
+                return color(d[0].slice(-2))
+            })
+            .attr("d", ([, I]) => line(I));
 
-    dot.append("circle")
-        .attr("r", 2.5);
 
-    dot.append("text")
-        .attr("font-family", "sans-serif")
-        .attr("font-size", 10)
-        .attr("text-anchor", "middle")
-        .attr("y", -8);
+
+
+
 
     function pointermoved(event) {
         // console.log("11111")
