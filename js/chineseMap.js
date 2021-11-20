@@ -14,5 +14,3 @@ export function showOnMap(year, month, feature) {
 }
 
 
-
-

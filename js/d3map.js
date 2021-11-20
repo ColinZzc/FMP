@@ -95,7 +95,7 @@ export default class Map {
             .attr("viewBox", [0, 0, that._width, that._height])
             .attr("style", "max-width: 100%; height: auto;")
             .call(d3.zoom().scaleExtent([1, 8]).on("zoom", function () {
-                svg.attr("transform", d3.event.transform)
+                // svg.attr("transform", d3.event.transform)
             })).on("dblclick.zoom", null)//禁用双击放大
         //.on('mousedown.zoom',null)//禁用拖拽
 
@@ -104,7 +104,7 @@ export default class Map {
             map = svg.append("g").attr("class", "map");
         }
         //解析地理位置json.map
-        d3.json(L_json, function (json) {
+        d3.json(L_json).then( function (json) {
             map.selectAll("path")
                 .data(json.features)
                 .enter()

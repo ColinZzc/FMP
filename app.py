@@ -1,5 +1,5 @@
 from flask import Flask, request
-from utils.data_engine import get_corrcoef_json, get_bucket_json
+from utils.data_engine import get_corrcoef_json, get_bucket_json, get_avg_pollution_json
 from flask_cors import CORS
 
 import logging
@@ -33,6 +33,11 @@ def bucket():
     feature = request.args.get("feature")
     year = request.args.get("year", default=2013)
     return get_bucket_json(feature, year)
+
+@app.route('/avg_pollution', methods=['GET'])
+def avg_pollution():
+    year = request.args.get("year", default=2013)
+    return get_avg_pollution_json(year)
 
 
 global engine

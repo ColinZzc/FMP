@@ -7,9 +7,9 @@ let meteorology = ["temp", "rh", "psfc"]
 let pollution = ["pm25", "pm10", "so2", "no2", "co", "o3"]
 
 let row = document.createElement("div")
-    row.style.display = "grid"
-    row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
-    matArea.appendChild(row)
+row.style.display = "grid"
+row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
+matArea.appendChild(row)
 let blank = document.createElement("div")
 row.appendChild(blank)
 for (const pollutionkey of pollution) {
@@ -25,11 +25,14 @@ for (const meteorologyKey of meteorology) {
     let icon = document.createElement("text")
     row.appendChild(icon)
     for (const pollutionKey of pollution) {
-        if (icon.textContent==="") icon.textContent = meteorologyKey;
+        if (icon.textContent === "") icon.textContent = meteorologyKey;
+        let matID = meteorologyKey + "_" + pollutionKey
+
         let box = document.createElement("div")
+        box.className = "matBox"
+        box.id = matID
         // box.onclick(showOnMap)
         row.appendChild(box)
-        let matID = meteorologyKey + "_" + pollutionKey
         corrMat(box, matID)
     }
 }
@@ -42,12 +45,12 @@ export function corrMat(div, feature, year) {
                     x: d => d.bucketid,
                     y: d => d.bucket_count,
                     z: d => d.month,
-                    chartID: feature,
+                     chartID: feature,
                     yDomain: [0, 2000],
                     width: 300, // outer width, in pixels
                     height: 150, // outer height, in pixels
                     onClick: showOnMap,
-                    color: d3v6.scaleOrdinal()
+                    color: d3.scaleOrdinal()
                         // 天文学上以春分、夏至、秋分、冬至分别作为春、夏、秋、冬四季的开始
                         .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
                         //The green is for spring, yellow for the summer sun, orange for autumn and blue for winter.
@@ -59,4 +62,19 @@ export function corrMat(div, feature, year) {
                 div.appendChild(lc)
             }
         })
+}
+
+export function updateMat(year) {
+    console.log(year)
+    let matList = d3.selectAll(".matBox")._groups[0]
+    for (const matListElement of matList) {
+        let feature = matListElement.id
+        airDB.get_bucket_by_feature_year(feature, year)
+        .then(data => {
+            if (data) {
+
+            }
+        })
+    }
+
 }

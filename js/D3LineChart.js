@@ -2,23 +2,24 @@
 // Released under the ISC license.
 // https://observablehq.com/@d3/multi-line-chart
 
+
 export function LineChart(data, {
     x = ([x]) => x, // given d in data, returns the (temporal) x-value
     y = ([, y]) => y, // given d in data, returns the (quantitative) y-value
     z = () => 1, // given d in data, returns the (categorical) z-value
     title, // given d in data, returns the title text
     defined, // for gaps in data
-    curve = d3v6.curveLinear, // method of interpolation between points
+    curve = d3.curveLinear, // method of interpolation between points
     marginTop = 20, // top margin, in pixels
     marginRight = 30, // right margin, in pixels
     marginBottom = 30, // bottom margin, in pixels
     marginLeft = 40, // left margin, in pixels
     width = 640, // outer width, in pixels
     height = 400, // outer height, in pixels
-    xType = d3v6.scaleUtc, // type of x-scale
+    xType = d3.scaleUtc, // type of x-scale
     xDomain, // [xmin, xmax]
     xRange = [marginLeft, width - marginRight], // [left, right]
-    yType = d3v6.scaleLinear, // type of y-scale
+    yType = d3.scaleLinear, // type of y-scale
     yDomain, // [ymin, ymax]
     yRange = [height - marginBottom, marginTop], // [bottom, top]
     yFormat, // a format specifier string for the y-axis
@@ -35,41 +36,41 @@ export function LineChart(data, {
     onClick
 } = {}) {
     // Compute values.
-    const X = d3v6.map(data, x);
-    const Y = d3v6.map(data, y);
-    const Z = d3v6.map(data, z);
-    const O = d3v6.map(data, d => d);
+    const X = d3.map(data, x);
+    const Y = d3.map(data, y);
+    const Z = d3.map(data, z);
+    const O = d3.map(data, d => d);
     if (defined === undefined) defined = (d, i) => !isNaN(X[i]) && !isNaN(Y[i]);
-    const D = d3v6.map(data, defined);
+    const D = d3.map(data, defined);
 
     // Compute default domains, and unique the z-domain.
-    if (xDomain === undefined) xDomain = d3v6.extent(X);
-    if (yDomain === undefined) yDomain = [0, d3v6.max(Y)];
+    if (xDomain === undefined) xDomain = d3.extent(X);
+    if (yDomain === undefined) yDomain = [0, d3.max(Y)];
     if (zDomain === undefined) zDomain = Z;
-    zDomain = new d3v6.InternSet(zDomain);
+    zDomain = new d3.InternSet(zDomain);
 
     // Omit any data not present in the z-domain.
-    const I = d3v6.range(X.length).filter(i => zDomain.has(Z[i]));
+    const I = d3.range(X.length).filter(i => zDomain.has(Z[i]));
 
     // Construct scales and axes.
     const xScale = xType(xDomain, xRange);
     const yScale = yType(yDomain, yRange);
 
     let scale = d3.scaleLinear().range(xRange).domain([-1, 1])
-    const xAxis = d3v6.axisBottom(scale).ticks(width / 80).tickSizeOuter(0);
-    const yAxis = d3v6.axisLeft(yScale).ticks(height / 60, yFormat);
+    const xAxis = d3.axisBottom(scale).ticks(width / 80).tickSizeOuter(0);
+    const yAxis = d3.axisLeft(yScale).ticks(height / 60, yFormat);
 
     // Compute titles.
-    const T = title === undefined ? Z : title === null ? null : d3v6.map(data, title);
+    const T = title === undefined ? Z : title === null ? null : d3.map(data, title);
 
     // Construct a line generator.
-    const line = d3v6.line()
+    const line = d3.line()
         .defined(i => D[i])
         .curve(curve)
         .x(i => xScale(X[i]))
         .y(i => yScale(Y[i]));
 
-    const svg = d3v6.create("svg")
+    const svg = d3.create("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
@@ -85,7 +86,7 @@ export function LineChart(data, {
     if (voronoi) svg.append("path")
         .attr("fill", "none")
         .attr("stroke", "#ccc")
-        .attr("d", d3v6.Delaunay
+        .attr("d", d3.Delaunay
             .from(I, i => xScale(X[i]), i => yScale(Y[i]))
             .voronoi([0, 0, width, height])
             .render());
@@ -116,7 +117,7 @@ export function LineChart(data, {
         .attr("stroke-width", strokeWidth)
         .attr("stroke-opacity", strokeOpacity)
         .selectAll("path")
-        .data(d3v6.group(I, i => Z[i]))
+        .data(d3.group(I, i => Z[i]))
         .join("path")
         .style("mix-blend-mode", mixBlendMode)
         // .attr("stroke", color)
@@ -140,8 +141,8 @@ export function LineChart(data, {
 
     function pointermoved(event) {
         // console.log("11111")
-        const [xm, ym] = d3v6.pointer(event);
-        const i = d3v6.least(I, i => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
+        const [xm, ym] = d3.pointer(event);
+        const i = d3.least(I, i => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
         path.attr("stroke", ([z]) => Z[i] === z ? color(z.slice(-2)) : "#ddd").filter(([z]) => Z[i] === z).raise();
         dot.attr("transform", `translate(${xScale(X[i])},${yScale(Y[i])})`);
         if (T) dot.select("text").text(T[i]);
@@ -163,10 +164,10 @@ export function LineChart(data, {
     }
 
     function pointerClicked() {
-        const [xm, ym] = d3v6.pointer(event);
-        const i = d3v6.least(I, i => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
+        const [xm, ym] = d3.pointer(event);
+        const i = d3.least(I, i => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
         // console.log(chartID, Z[i]) //201301
-        onClick(parseInt(Z[i].slice(0,4)), parseInt(Z[i].slice(-2)), chartID)
+        onClick(parseInt(Z[i].slice(0, 4)), parseInt(Z[i].slice(-2)), chartID)
     }
 
     return Object.assign(svg.node(), {value: null});
