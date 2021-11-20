@@ -137,27 +137,25 @@ export function LineChart(data, {
             .attr("y", -8);
     }
 
-    if (path==null) {
+    if (path == null) {
         let gs = svg.selectAll("g")
         path = gs.filter(function (d, i) {
             //d 不明物体 可以为null
-            return i===10
+            return i === 10
         })
         path = path.selectAll("path")
     }
 
     path.data(d3.group(I, i => Z[i]))
-            .join("path")
-            .style("mix-blend-mode", mixBlendMode)
-            .attr("stroke", d => {
-                // console.log(color(d[0].slice(-2)));
-                return color(d[0].slice(-2))
-            })
-            .attr("d", ([, I]) => line(I));
-
-
-
-
+        .join("path")
+        .transition()
+        .duration(500)
+        .style("mix-blend-mode", mixBlendMode)
+        .attr("stroke", d => {
+            // console.log(color(d[0].slice(-2)));
+            return color(d[0].slice(-2))
+        })
+        .attr("d", ([, I]) => line(I));
 
 
     function pointermoved(event) {

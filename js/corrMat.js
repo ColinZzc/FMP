@@ -1,33 +1,41 @@
 import {LineChart} from "./D3LineChart.js";
-import {showOnMap} from "./chineseMap.js";
-
 
 let matArea = document.getElementById("corrMat")
 let meteorology = ["temp", "rh", "psfc"]
 let pollution = ["pm25", "pm10", "so2", "no2", "co", "o3"]
 
+//标题行
 let row = document.createElement("div")
 row.style.display = "grid"
 row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
 matArea.appendChild(row)
+//标题行左上角空白位
 let blank = document.createElement("div")
 row.appendChild(blank)
+//添加标题行各项
 for (const pollutionkey of pollution) {
-    let temp = document.createElement("text")
-    temp.textContent = pollutionkey
-    row.appendChild(temp)
+    let icon = document.createElement("text")
+    icon.className = "button"
+    icon.textContent = pollutionkey
+    row.appendChild(icon)
 }
+
 for (const meteorologyKey of meteorology) {
+    //一行
     let row = document.createElement("div")
     row.style.display = "grid"
     row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
     matArea.appendChild(row)
+    //标签元素
     let icon = document.createElement("text")
+    icon.className = "button"
     row.appendChild(icon)
-    for (const pollutionKey of pollution) {
-        if (icon.textContent === "") icon.textContent = meteorologyKey;
-        let matID = meteorologyKey + "_" + pollutionKey
 
+    for (const pollutionKey of pollution) {
+        //第一格标签
+        if (icon.textContent === "") icon.textContent = meteorologyKey;
+
+        let matID = meteorologyKey + "_" + pollutionKey
         let box = document.createElement("div")
         box.className = "matBox"
         box.id = matID
@@ -60,7 +68,7 @@ export function updateMat(year) {
                 if (data) {
                     LineChart(data, {
                         chartID: feature,
-                        svg: d3.select("#"+feature).select("svg")
+                        svg: d3.select("#" + feature).select("svg")
                     })
                 }
             })

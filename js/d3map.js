@@ -72,7 +72,7 @@ import {rampX} from "./utils.js";
 
 export default class Map {
     constructor(svg) {
-        this._width = 600;
+        this._width = 700;
         this._height = 500;
         this._projection = d3.geoMercator().translate([this._width / 2, this._height / 2]).center([105, 38]).scale(490);
         this._path = d3.geoPath().projection(this._projection);
@@ -104,7 +104,7 @@ export default class Map {
             map = svg.append("g").attr("class", "map");
         }
         //解析地理位置json.map
-        d3.json(L_json).then( function (json) {
+        d3.json(L_json).then(function (json) {
             map.selectAll("path")
                 .data(json.features)
                 .enter()
@@ -137,6 +137,8 @@ export default class Map {
             .attr("fill-opacity", 1)
 
         circles.merge(new_circle)
+            .transition()
+            .duration(500)
             .attr("fill", function (d) {
                 return d3.interpolateRdBu(linear(d[featureName]))
             })
