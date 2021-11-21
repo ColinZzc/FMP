@@ -73,5 +73,26 @@ export function updateMat(year) {
                 }
             })
     }
-
 }
+
+//season legend
+let mouseover = function (d) {
+    let id = d3.select(this).attr("id")
+    d3.selectAll(".line").style("opacity", 0.1);
+    d3.selectAll("."+id).style("opacity", 1);
+};
+let mouseleave = function (d) {
+    d3.selectAll(".line").style("opacity", 1);
+};
+d3.selectAll("#spring")
+.on("mouseover", mouseover)
+.on("mouseleave", mouseleave);
+d3.selectAll("#summer")
+.on("mouseover", mouseover)
+.on("mouseleave", mouseleave);
+d3.selectAll("#autumn")
+.on("mouseover", mouseover)
+.on("mouseleave", mouseleave);
+d3.selectAll("#winter")
+.on("mouseover", mouseover)
+.on("mouseleave", mouseleave);

@@ -35,6 +35,12 @@ export function LineChart(data, {
             "#FFFE00", "#FFFE00", "#FFFE00",
             "#FF7F00", "#FF7F00", "#FF7F00",
             "#01BFFF", "#01BFFF", "#01BFFF"]), // stroke color of line
+    season = d3.scaleOrdinal()
+        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
+        .range(["spring", "spring", "spring",
+            "summer", "summer", "summer",
+            "autumn", "autumn", "autumn",
+            "winter", "winter", "winter"]),
     strokeLinecap, // stroke line cap of line
     strokeLinejoin, // stroke line join of line
     strokeWidth = 1.5, // stroke width of line
@@ -138,12 +144,7 @@ export function LineChart(data, {
     }
 
     if (path == null) {
-        let gs = svg.selectAll("g")
-        path = gs.filter(function (d, i) {
-            //d 不明物体 可以为null
-            return i === 10
-        })
-        path = path.selectAll("path")
+        path = svg.selectAll(".line")
     }
 
     path.data(d3.group(I, i => Z[i]))
@@ -151,18 +152,24 @@ export function LineChart(data, {
         .transition()
         .duration(500)
         .style("mix-blend-mode", mixBlendMode)
+        .attr("class", d => {
+            return season(d[0].slice(-2))+" line"
+        })
+        .attr()
         .attr("stroke", d => {
             // console.log(color(d[0].slice(-2)));
             return color(d[0].slice(-2))
         })
         .attr("d", ([, I]) => line(I));
 
-
     function pointermoved(event) {
         // console.log("11111")
         const [xm, ym] = d3.pointer(event);
         const i = d3.least(I, i => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
-        path.attr("stroke", ([z]) => Z[i] === z ? color(z.slice(-2)) : "#ddd").filter(([z]) => Z[i] === z).raise();
+        d3.select(this)
+            .selectAll(".line")
+            .attr("stroke", ([z]) => Z[i] === z ? color(z.slice(-2)) : "#ddd")
+            .filter(([z]) => Z[i] === z).raise();
         dot.attr("transform", `translate(${xScale(X[i])},${yScale(Y[i])})`);
         if (T) dot.select("text").text(T[i]);
         svg.property("value", O[i]).dispatch("input", {bubbles: true});
@@ -170,13 +177,18 @@ export function LineChart(data, {
 
     function pointerentered() {
         // console.log("222")
-        path.style("mix-blend-mode", null).attr("stroke", "#ddd");
+        d3.select(this)
+            .selectAll(".line")
+            .style("mix-blend-mode", null)
+            .attr("stroke", "#ddd");
         dot.attr("display", null);
     }
 
     function pointerleft() {
         // console.log("333")
-        path.style("mix-blend-mode", "multiply").attr("stroke", ([z]) => color(z.slice(-2)));
+        d3.select(this)
+            .selectAll(".line")
+            .style("mix-blend-mode", "multiply").attr("stroke", ([z]) => color(z.slice(-2)));
         dot.attr("display", "none");
         svg.node().value = null;
         svg.dispatch("input", {bubbles: true});
