@@ -4,7 +4,7 @@ export default class DB {
         this._loadingList = new Set()
     }
 
-    async get_corr_by_date(year, month) {
+    async get_corr_by_date(year=2013, month=1) {
         if (arguments.length < 2) {
             console.log("need date")
             return null;
@@ -37,7 +37,7 @@ export default class DB {
         })
     }
 
-    async get_bucket_by_feature_year(feature, year) {
+    async get_bucket_by_feature_year(feature, year=2013) {
         let key = "bucket_" + feature+"_"+year
         if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
             this._loadingList.add(key)
@@ -47,7 +47,7 @@ export default class DB {
         return this._cache[key] ?? null;
     }
 
-    get_bucket_from_server(feature, year = 2013) {
+    get_bucket_from_server(feature, year=2013) {
         return new Promise(resolve => {
         let url = "http://127.0.0.1:5000/bucket" + "?feature=" + feature + "&year=" + year
             if (d3.version.slice(0,1)=='6') {
@@ -63,7 +63,7 @@ export default class DB {
         })
     }
 
-    async get_pollution_by_year(year) {
+    async get_pollution_by_year(year=2013) {
         let key = "avg_pollution_" + year
         if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
             this._loadingList.add(key)

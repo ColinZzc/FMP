@@ -10,6 +10,7 @@
   "author": "colin",
   "license": "ISC",
   "dependencies": {
-    "lite-server": "^2.6.1"
+    "lite-server": "^2.6.1",
+    "mapbox-elevation": "^1.0.0"
   }
 }

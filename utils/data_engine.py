@@ -1,6 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine
 import logging
+import math
 
 engine = create_engine('oracle+cx_oracle://colin:colin@localhost:1521/?service_name=airvispdb.mshome.net', echo=False)
 
@@ -47,9 +48,112 @@ def get_corrcoef_json(year, month):
     logging.debug(f'''get corrcoef in {year} {month}, total data {str(df.shape[0])} lines.''')
     return df.to_json(orient='records')
 
+# 直角坐标转换圆形
+def transform(v, u):
+    x = None
+    y = None
+    if u == 0:
+        y = 0
+        x = v
+    elif v == 0:
+        x = 0
+        y = u
+    else:
+        quadrant = 0
+        originalLength = math.sqrt(u ** 2 + v ** 2)
+        if u > 0:
+            if v > 0:
+                quadrant = 1
+            else:
+                quadrant = 4
+        else:
+            if v > 0:
+                quadrant = 2
+            else:
+                quadrant = 3
+        tempx = abs(v)
+        tempy = abs(u)
+        theta = math.atan(tempy / tempx)
+        maxLength = None;
+        if tempx >= tempy:
+            maxLength = 1 / math.cos(theta)
+        else:
+            maxLength = 1 / math.sin(theta)
+        scaledLength = originalLength / maxLength
+        x = math.cos(theta) * scaledLength
+        y = math.sin(theta) * scaledLength
+        if quadrant == 1:
+            pass
+        elif quadrant == 2:
+            y = -y
+        elif quadrant == 3:
+            x = -x
+            y = -y
+        elif quadrant == 4:
+            x = -x
+    return x, y
+
 
 def get_bucket_json(feature, year=2013):
-    sql = f'''
+    sql = ""
+    df = None
+    if "wind" in feature:
+        fea = feature.replace("wind", "")
+        sql = f'''
+        select month, u, v from (
+            select ROWNUM rnum, month, u, v from
+                (
+                    select '{year}02' month, avg(u) u, avg(v) v from
+                    (
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}02
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}03
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}04
+                    )group by lat, lon
+                    union
+                    select '{year}05' month, avg(u) u, avg(v) v from
+                    (
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}05
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}06
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}07
+                    )group by lat, lon
+                    union
+                    select '{year}08' month, avg(u) u, avg(v) v from
+                    (
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}08
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}09
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}10
+                    )group by lat, lon
+                    union
+                    select '{year}11' month, avg(u) u, avg(v) v from
+                    (
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}11
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}12
+                        union
+                        select lat, lon, u{fea} u, v{fea} v from corrcoef{year}01
+                    )group by lat, lon
+                )
+            )
+            where mod(rnum,20)=0
+        '''
+        df = pd.read_sql_query(sql, engine)
+        # 减小数据量
+        # df = df[df.index % 10 == 0] # in sql
+        # 坐标转换
+        for i in df.index:
+            u = df.loc[i, 'u']
+            v = df.loc[i, 'v']
+            x, y = transform(v, u)
+            df.loc[i, 'u'] = y
+            df.loc[i, 'v'] = x
+    else:
+        sql = f'''
         select '{str(year) + "01"}' as month, bucketID, count(*) as bucket_count from (
             select cast({feature}/0.026 as int) as bucketID
             from {"corrcoef" + str(year) + "01"}
@@ -110,9 +214,10 @@ def get_bucket_json(feature, year=2013):
             from {"corrcoef" + str(year) + "12"}
         )group by bucketID
     '''
-    df = pd.read_sql_query(sql, engine)
+        df = pd.read_sql_query(sql, engine)
+
     # df['bucketid'] = df['bucketid'].astype('str')
-    logging.debug(f'''get {feature} bucket in {year}, total data {str(df.shape[0])} lines.''')
+    logging.debug(f'''get {feature} bucket in {year}, total reduced data {str(df.shape[0])} lines.''')
     return df.to_json(orient='records')
 
 

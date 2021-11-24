@@ -123,6 +123,7 @@ export function LineChart(data, {
                 .text(yLabel));
 
         path = svg.append("g")
+            .attr("class","lines")
             .attr("fill", "none")
             .attr("stroke-linecap", strokeLinecap)
             .attr("stroke-linejoin", strokeLinejoin)

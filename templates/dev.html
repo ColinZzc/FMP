@@ -17,54 +17,25 @@
 </body>
 <footer>
     <script type="module">
+        import DB from "../js/DB.js"
+        window.airDB = new DB()
+    </script>
+    <script type="module">
+        import {windChart} from "../js/windChart.js";
+
         let chart = document.getElementById("chart")
-        let width = 300
-        let height = 300
-        let container = d3.create('svg')
-            .attr("width", width)
-            .attr("height", height)
-            .attr("viewBox", [0, 0, width, height])
-            .attr("style", "max-width: 100%; height: auto;")
-        let svg = container.append('g')
-            .attr(
-                "transform",
-                "translate(" + width / 2 + "," + height / 2 + ")"
-            )
+        let feature = 'wind_o3'
+        airDB.get_bucket_by_feature_year(feature)
+        .then(data => {
+            let lc;
+            if (data) {
+                if ("wind" === feature.slice(0, 4)) {
+                    lc = windChart(data, feature)
+                }
 
-        svg.append("g")
-            .attr("class", "circle")
-            .selectAll("circle")
-            .data([80, 56, 33, 10])
-            .enter()
-            .append("circle")
-            .attr("r", d => d)
-            .attr("class", "circle")
-            .style("stroke", "#ccc")
-            .style("stroke-dasharray", "3,3")
-            .style("opacity", 0.5)
-            .style("fill", "none");
-
-        svg.selectAll("line")
-            .data(
-                [
-                    {x: 0, y: -50},
-                    {x: 30, y: 30},
-                    {x: 30, y: -30},
-                    {x: -50, y: 0}
-                ]
-            )
-            .enter()
-            .append("line")
-            .attr('stroke', "#ff0000")
-            .attr('stroke-width', 1)
-            .attr('opacity', 1)
-            .attr('x1', 0)
-            .attr('y1', 0)
-            .attr('x2', d => d.x)
-            .attr('y2', d => d.y)
-
-
-        chart.appendChild(container.node())
+                chart.appendChild(lc)
+            }
+        })
     </script>
 
 

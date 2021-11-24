@@ -1,6 +1,8 @@
-export function windChart(data, container) {
-    let width = 300;
-    let height = 300;
+import {const_value} from "./const.js";
+
+export function windChart(data, chartID, container) {
+    let width = 100;
+    let height = 100;
     let svg
     if (typeof (container) == 'undefined') {
         // initWind() 圆底坐标轴 画布平移
@@ -17,38 +19,52 @@ export function windChart(data, container) {
             )
 
         svg.append("g")
-            .attr("class", "circle")
+            .attr("class", "backgroundCircle")
             .selectAll("circle")
-            .data([80, 56, 33, 10])
+            .data([40, 28, 16, 5])
             .enter()
             .append("circle")
             .attr("r", d => d)
-            .attr("class", "circle")
+            .attr("class", "backgroundCircle")
             .style("stroke", "#ccc")
             .style("stroke-dasharray", "3,3")
             .style("opacity", 0.5)
             .style("fill", "none");
     }
 
-    // 画线 方向->方向; 数量->长度；相关性->颜色
-    svg.selectAll("line")
-        .data(
-            [
-                {x: 0, y: -50},
-                {x: 30, y: 30},
-                {x: 30, y: -30},
-                {x: -50, y: 0}
-            ]
-        )
+
+
+    // 画线 方向->方向; 相关性->长度；透明度->数量，季节->颜色
+    let color = d3.scaleOrdinal()
+        // 天文学上以春分、夏至、秋分、冬至分别作为春、夏、秋、冬四季的开始
+        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
+        //The green is for spring, yellow for the summer sun, orange for autumn and blue for winter.
+        .range(["#A7FC01", "#A7FC01", "#A7FC01",
+            "#FFFE00", "#FFFE00", "#FFFE00",
+            "#FF7F00", "#FF7F00", "#FF7F00",
+            "#01BFFF", "#01BFFF", "#01BFFF"]) // stroke color of line
+
+    let season = d3.scaleOrdinal()
+        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
+        .range(["spring", "spring", "spring",
+            "summer", "summer", "summer",
+            "autumn", "autumn", "autumn",
+            "winter", "winter", "winter"])
+
+    svg.append("g")
+        .attr("class","windPoints")
+        .selectAll(".windPoint")
+        .data(data)
         .enter()
-        .append("line")
-        .attr('stroke', "#ff0000")
-        .attr('stroke-width', 1)
-        .attr('opacity', 1)
-        .attr('x1', 0)
-        .attr('y1', 0)
-        .attr('x2', d => d.x)
-        .attr('y2', d => d.y)
+        .append("circle")
+        .attr("class", d=>{
+            return season(d.month.slice(-2))+" windPoint"
+        })
+        .attr("r",0.1)
+        .attr("stroke", d => color(d.month.slice(-2)))
+        .attr('opacity', const_value.windPointsOpacity)
+        .attr('cx', d => d.v * width / 2) //x
+        .attr('cy', d => d.u * width / 2) //y
 
     return container.node()
 }
