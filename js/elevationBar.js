@@ -1,6 +1,4 @@
-import {const_value} from "./const.js";
-
-export function windChart(data, met_pol, container) {
+export function elevationBar(data, container) {
     let width = 100;
     let height = 100;
     let svg

@@ -81,10 +81,8 @@ export default class Map {
 
     initMap() {
 
-        let width = 150
-        let height = 15
-        let marginLeft = 10
-        let marginTop = 450
+        let mapHorShift = -10
+        let mapVerShift = -10
 
         let that = this;
         let L_json = "../resource/china.json";
@@ -94,14 +92,19 @@ export default class Map {
             .attr("height", that._height)
             .attr("viewBox", [0, 0, that._width, that._height])
             .attr("style", "max-width: 100%; height: auto;")
-            .call(d3.zoom().scaleExtent([1, 8]).on("zoom", function () {
-                // svg.attr("transform", d3.event.transform)
-            })).on("dblclick.zoom", null)//禁用双击放大
-        //.on('mousedown.zoom',null)//禁用拖拽
+        //     .call(d3.zoom().scaleExtent([1, 8]).on("zoom", function () {
+        //         // svg.attr("transform", d3.event.transform)
+        //     })).on("dblclick.zoom", null)//禁用双击放大
+        // //.on('mousedown.zoom',null)//禁用拖拽
 
         let map = svg.select(".map");
         if (map.empty()) {
-            map = svg.append("g").attr("class", "map");
+            map = svg.append("g")
+                .attr("class", "mapArea")
+                .attr("transform", `translate(${mapHorShift},${mapVerShift})`)
+                .append("g")
+                .attr("class", "map")
+
         }
         //解析地理位置json.map
         d3.json(L_json).then(function (json) {
@@ -118,15 +121,18 @@ export default class Map {
         })
 
         this.renderLegend()
+        this.renderElevationBar()
     }
 
-    async renderPoints(data, featureName) {
+    async renderPoints(data, met_pol) {
         let that = this;
         let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
         let svg = that._svg
         let points = svg.select(".points");
         if (points.empty()) {
-            points = svg.append("g").attr("class", "points");
+            points = svg.select(".mapArea")
+                .append("g")
+                .attr("class", "points");
         }
         let circles = points.selectAll("circle")
             .data(data)
@@ -140,7 +146,7 @@ export default class Map {
             .transition()
             .duration(500)
             .attr("fill", function (d) {
-                return d3.interpolateRdBu(linear(d[featureName]))
+                return d3.interpolateRdBu(linear(d[met_pol]))
             })
             .attr("transform", function (d) {
                 //计算标注点的位置
@@ -171,7 +177,7 @@ export default class Map {
             .attr("transform", `translate(${marginLeft},${marginTop - 10})`)
             .attr("fill", "currentColor")
             .attr("font-weight", "light")
-            .attr('font-size', 15)
+            .attr('font-size', 14)
             .text(d => d);
 
         legend.selectAll("image")
@@ -194,4 +200,49 @@ export default class Map {
             .call(xAxis)
     }
 
+    renderElevationBar() {
+
+        let width = 30
+        let height = 400
+        let marginLeft = 10
+        let marginTop = 450
+
+        let that = this;
+        let svg = that._svg
+
+        let eleBar = svg.select(".elevationBar");
+        if (eleBar.empty()) {
+            eleBar = svg.append("g").attr("class", "elevationBar");
+        }
+
+        eleBar.selectAll(".title")
+            .data(["correlation coefficient"])
+            .enter()
+            .append("text")
+            .attr("class", "title")
+            .attr("transform", `translate(${marginLeft},${marginTop - 10})`)
+            .attr("fill", "currentColor")
+            .attr("font-weight", "light")
+            .attr('font-size', 14)
+            .text(d => d);
+
+        legend.selectAll("image")
+            .data([rampX(d3.interpolateRdBu).toDataURL()])
+            .enter()
+            // .append("g").attr("class", "image").attr("width",200).attr("height",20)
+            .append("image")
+            .attr("preserveAspectRatio", "none")
+            .attr("transform", `translate(${marginLeft},${marginTop})`)
+            .style("height", height)
+            .style("width", width)
+            .attr("xlink:href", d => d);
+        let scale = d3.scaleLinear().range([0, width]).domain([-1, 1])
+        let xAxis = d3.axisBottom(scale).ticks(5).tickFormat(d => d)
+        legend.selectAll(".xAxis")
+            .data([1])
+            .enter()
+            .append("g").attr("class", "xAxis")
+            .attr("transform", `translate(${marginLeft},${marginTop + height + 1})`)
+            .call(xAxis)
+    }
 }

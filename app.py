@@ -21,19 +21,22 @@ app.secret_key = b'qwertyuiop'
 def hello_world():
     return 'Hello World!'
 
-
+# for map
 @app.route('/corrcoef', methods=['GET'])
 def corrcoef():
     year = request.args.get("year")
     month = request.args.get("month")
-    return get_corrcoef_json(year, month)
+    met_pol = request.args.get("met_pol")
+    return get_corrcoef_json(year, month, met_pol)
 
+# for corrMat
 @app.route('/bucket', methods=['GET'])
 def bucket():
     feature = request.args.get("feature")
     year = request.args.get("year", default=2013)
     return get_bucket_json(feature, year)
 
+# for sra
 @app.route('/avg_pollution', methods=['GET'])
 def avg_pollution():
     year = request.args.get("year", default=2013)

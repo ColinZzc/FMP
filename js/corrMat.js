@@ -37,54 +37,66 @@ for (const meteorologyKey of meteorology) {
         //第一格标签
         if (icon.textContent === "") icon.textContent = meteorologyKey;
 
-        let matID = meteorologyKey + "_" + pollutionKey
+        let met_pol = meteorologyKey + "_" + pollutionKey
         let box = document.createElement("div")
         box.className = "matBox"
-        box.id = matID
+        box.id = met_pol
         // box.onclick(showOnMap)
         row.appendChild(box)
-        corrMat(box, matID)
+        corrMat(box, met_pol)
     }
 }
 
-export function corrMat(div, feature) {
-    airDB.get_bucket_by_feature_year(feature)
-        .then(data => {
-            let lc;
-            if (data) {
-                if ("wind" === feature.slice(0, 4)) {
-                    lc = windChart(data, feature)
-                } else {
-                    lc = LineChart(data, {
-                        chartID: feature,
-                    })
+export function corrMat(div, met_pol) {
+    if ("wind" === met_pol.slice(0, 4)) {
+        airDB.get_bucket_by_feature_year(met_pol)
+            .then(data => {
+                if (data) {
+                    let wc = windChart(data, met_pol)
+                    div.appendChild(wc)
+                    console.log(met_pol + " complete")
                 }
-
-                div.appendChild(lc)
-            }
-        })
+            })
+    } else {
+        airDB.get_bucket_by_feature_year(met_pol)
+            .then(data => {
+                if (data) {
+                    let lc = LineChart(data, {
+                        chartID: met_pol,
+                    })
+                    div.appendChild(lc)
+                    console.log(met_pol + " complete")
+                }
+            })
+    }
 }
 
 export function updateMat(year) {
-    console.log(year)
+    console.log("start update corrMat to year " + year + " ...")
     // let matList = d3.selectAll(".matBox")
     let matList = document.getElementsByClassName("matBox")
     for (const matListElement of matList) {
-        let feature = matListElement.id
-        airDB.get_bucket_by_feature_year(feature, year)
-            .then(data => {
-                if (data) {
-                    if ("wind" === feature.slice(0, 4)) {
-                        windChart(data, feature, d3.select("#" + feature).select("svg"))
-                    } else {
-                        LineChart(data, {
-                            chartID: feature,
-                            svg: d3.select("#" + feature).select("svg")
-                        })
+        let met_pol = matListElement.id
+        if ("wind" === met_pol.slice(0, 4)) {
+            airDB.get_bucket_by_feature_year(met_pol, year)
+                .then(data => {
+                    if (data) {
+                        windChart(data, met_pol, d3.select("#" + met_pol).select("svg"))
+                        console.log(met_pol + " update complete")
                     }
-
-                }
-            })
+                })
+        } else {
+            airDB.get_bucket_by_feature_year(met_pol)
+                .then(data => {
+                    if (data) {
+                        LineChart(data, {
+                            chartID: met_pol,
+                            svg: d3.select("#" + met_pol).select("svg")
+                        })
+                        console.log(met_pol + " update complete")
+                    }
+                })
+        }
     }
 }
 
@@ -97,12 +109,12 @@ let mouseover = function (d) {
 
     let points = d3.selectAll(".windPoints")
     points.selectAll(".windPoint").style("display", "none");
-    points.selectAll("."+id).style("display","inline")
+    points.selectAll("." + id).style("display", "inline")
 
 };
 let mouseleave = function (d) {
     d3.selectAll(".line").style("opacity", 1);
-    d3.selectAll(".windPoint").style("display","inline");
+    d3.selectAll(".windPoint").style("display", "inline");
 
 };
 d3.selectAll("#spring")

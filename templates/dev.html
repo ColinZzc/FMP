@@ -24,7 +24,7 @@
         import {windChart} from "../js/windChart.js";
 
         let chart = document.getElementById("chart")
-        let feature = 'wind_o3'
+        // let feature = 'wind_o3'
         airDB.get_bucket_by_feature_year(feature)
         .then(data => {
             let lc;

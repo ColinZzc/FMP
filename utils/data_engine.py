@@ -4,49 +4,37 @@ import logging
 import math
 
 engine = create_engine('oracle+cx_oracle://colin:colin@localhost:1521/?service_name=airvispdb.mshome.net', echo=False)
-
-
 # engine = create_engine('oracle+cx_oracle://"zhichao.zhang":colin@10.7.2.138:1521/?service_name=orclpdb', echo=False)
-def get_corrcoef_json(year, month):
+
+'''
+sql 函数
+create or replace function addXYVector(x in number, y in number) return number is
+begin
+    return sqrt(x*x+y*y);
+end;
+'''
+# 某年某月所有相关性的数据 风速进行了计算
+def get_corrcoef_json(year, month, met_pol):
     YearMonth = str(year) + '%02d' % int(month)
-    sql = f'''
-                SELECT "CORRCOEF"."LAT" AS "LAT",
-                      "CORRCOEF"."LON" AS "LON",
-                      "CORRCOEF"."PSFC_CO" AS "PSFC_CO",
-                      "CORRCOEF"."PSFC_NO2" AS "PSFC_NO2",
-                      "CORRCOEF"."PSFC_O3" AS "PSFC_O3",
-                      "CORRCOEF"."PSFC_PM10" AS "PSFC_PM10",
-                      "CORRCOEF"."PSFC_PM25" AS "PSFC_PM25",
-                      "CORRCOEF"."PSFC_SO2" AS "PSFC_SO2",
-                      "CORRCOEF"."RH_CO" AS "RH_CO",
-                      "CORRCOEF"."RH_NO2" AS "RH_NO2",
-                      "CORRCOEF"."RH_O3" AS "RH_O3",
-                      "CORRCOEF"."RH_PM10" AS "RH_PM10",
-                      "CORRCOEF"."RH_PM25" AS "RH_PM25",
-                      "CORRCOEF"."RH_SO2" AS "RH_SO2",
-                      "CORRCOEF"."TEMP_CO" AS "TEMP_CO",
-                      "CORRCOEF"."TEMP_NO2" AS "TEMP_NO2",
-                      "CORRCOEF"."TEMP_O3" AS "TEMP_O3",
-                      "CORRCOEF"."TEMP_PM10" AS "TEMP_PM10",
-                      "CORRCOEF"."TEMP_PM25" AS "TEMP_PM25",
-                      "CORRCOEF"."TEMP_SO2" AS "TEMP_SO2",
-                      "CORRCOEF"."U_CO" AS "U_CO",
-                      "CORRCOEF"."U_NO2" AS "U_NO2",
-                      "CORRCOEF"."U_O3" AS "U_O3",
-                      "CORRCOEF"."U_PM10" AS "U_PM10",
-                      "CORRCOEF"."U_PM25" AS "U_PM25",
-                      "CORRCOEF"."U_SO2" AS "U_SO2",
-                      "CORRCOEF"."V_CO" AS "V_CO",
-                      "CORRCOEF"."V_NO2" AS "V_NO2",
-                      "CORRCOEF"."V_O3" AS "V_O3",
-                      "CORRCOEF"."V_PM10" AS "V_PM10",
-                      "CORRCOEF"."V_PM25" AS "V_PM25",
-                      "CORRCOEF"."V_SO2" AS "V_SO2"
-                FROM "CORRCOEF{YearMonth}" "CORRCOEF"
+    sql = ""
+    if "wind" in met_pol:
+        pollution = met_pol[4:]
+        sql = f'''
+            SELECT LAT, LON,
+            addxyvector(U_{pollution}, V_{pollution}) {met_pol}
+            from corrcoef{YearMonth}
             '''
+    else:
+        sql = f'''
+            SELECT c.LAT , c.LON , c.{met_pol}, cast(l.elevation/103 as int) eleGroup
+            from corrcoef{YearMonth} c join locations l on 
+            c.lat = l.lat and c.lon = l.lon
+            '''
+
     df = pd.read_sql_query(sql, engine)
     logging.debug(f'''get corrcoef in {year} {month}, total data {str(df.shape[0])} lines.''')
     return df.to_json(orient='records')
+
 
 # 直角坐标转换圆形
 def transform(v, u):
@@ -94,6 +82,7 @@ def transform(v, u):
     return x, y
 
 
+# 相关性数据桶 某年每个月数据分布在不同相关性区间的数量
 def get_bucket_json(feature, year=2013):
     sql = ""
     df = None
@@ -221,187 +210,192 @@ def get_bucket_json(feature, year=2013):
     return df.to_json(orient='records')
 
 
+# pollution 一年每月均值 for sra chart
 def get_avg_pollution_json(year=2013):
-    sql = f'''
-            SELECT
-                '{year}01'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}01" "A1"
-            GROUP BY
-                '{year}01'
-                    
-                union
-            
-            SELECT
-                '{year}02'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}02" "A1"
-            GROUP BY
-                '{year}02'
-                    
-                union
-            
-            SELECT
-                '{year}03'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}03" "A1"
-            GROUP BY
-                '{year}03'
-                    
-                union
-            
-            SELECT
-                '{year}04'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}04" "A1"
-            GROUP BY
-                '{year}04'
-                    
-                union
-            
-            SELECT
-                '{year}05'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}05" "A1"
-            GROUP BY
-                '{year}05'
-                    
-                union
-            
-            SELECT
-                '{year}06'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}06" "A1"
-            GROUP BY
-                '{year}06'
-                    
-                union
-            
-            SELECT
-                '{year}07'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}07" "A1"
-            GROUP BY
-                '{year}07'
-                    
-                union
-            
-            SELECT
-                '{year}08'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}08" "A1"
-            GROUP BY
-                '{year}08'
-                    
-                union
-            
-            SELECT
-                '{year}09'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}09" "A1"
-            GROUP BY
-                '{year}09'
-                    
-                union
-            
-            SELECT
-                '{year}10'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}10" "A1"
-            GROUP BY
-                '{year}10'
-                    
-                union
-            
-            SELECT
-                '{year}11'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}11" "A1"
-            GROUP BY
-                '{year}11'
-                    
-                union
-            
-            SELECT
-                '{year}12'             "MONTH",
-                AVG("A1"."AVG_PM25") "PM25",
-                AVG("A1"."AVG_PM10") "PM10",
-                AVG("A1"."AVG_SO2")  "SO2",
-                AVG("A1"."AVG_NO2")  "NO2",
-                AVG("A1"."AVG_CO")   "CO",
-                AVG("A1"."AVG_O3")   "O3"
-            FROM
-                "COLIN"."AVG{year}12" "A1"
-            GROUP BY
-                '{year}12'
-                    
-    '''
+
+    # 优化速度，建了表 -> create table AVG2013 as
+    # sql = f'''
+    #         SELECT
+    #             '{year}01'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}01" "A1"
+    #         GROUP BY
+    #             '{year}01'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}02'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}02" "A1"
+    #         GROUP BY
+    #             '{year}02'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}03'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}03" "A1"
+    #         GROUP BY
+    #             '{year}03'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}04'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}04" "A1"
+    #         GROUP BY
+    #             '{year}04'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}05'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}05" "A1"
+    #         GROUP BY
+    #             '{year}05'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}06'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}06" "A1"
+    #         GROUP BY
+    #             '{year}06'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}07'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}07" "A1"
+    #         GROUP BY
+    #             '{year}07'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}08'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}08" "A1"
+    #         GROUP BY
+    #             '{year}08'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}09'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}09" "A1"
+    #         GROUP BY
+    #             '{year}09'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}10'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}10" "A1"
+    #         GROUP BY
+    #             '{year}10'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}11'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}11" "A1"
+    #         GROUP BY
+    #             '{year}11'
+    #
+    #             union
+    #
+    #         SELECT
+    #             '{year}12'             "MONTH",
+    #             AVG("A1"."AVG_PM25") "PM25",
+    #             AVG("A1"."AVG_PM10") "PM10",
+    #             AVG("A1"."AVG_SO2")  "SO2",
+    #             AVG("A1"."AVG_NO2")  "NO2",
+    #             AVG("A1"."AVG_CO")   "CO",
+    #             AVG("A1"."AVG_O3")   "O3"
+    #         FROM
+    #             "COLIN"."AVG{year}12" "A1"
+    #         GROUP BY
+    #             '{year}12'
+    #
+    # '''
+
+    sql = f'''select * from avg{year}'''
     df = pd.read_sql_query(sql, engine)
     # normalize
     df['pm25'] = df['pm25'] / 42.2614

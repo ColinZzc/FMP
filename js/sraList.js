@@ -15,6 +15,7 @@ for (const year of years) {
             if (data) {
                 let temp = sra(data)
                 box.appendChild(temp)
+                console.log("sra complete year of "+year)
             }
         })
 }
