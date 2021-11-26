@@ -67,7 +67,7 @@ export function corrMat(div, met_pol) {
                         chartID: met_pol,
                     })
                     div.appendChild(lc)
-                    console.log(met_pol + " complete")
+                    // console.log(met_pol + " complete")
                 }
             })
     }
@@ -80,6 +80,7 @@ export function updateMat(year) {
     for (const matListElement of matList) {
         let met_pol = matListElement.id
         if ("wind" === met_pol.slice(0, 4)) {
+            return
             airDB.get_bucket_by_feature_year(met_pol, year)
                 .then(data => {
                     if (data) {
@@ -88,7 +89,7 @@ export function updateMat(year) {
                     }
                 })
         } else {
-            airDB.get_bucket_by_feature_year(met_pol)
+            airDB.get_bucket_by_feature_year(met_pol, year)
                 .then(data => {
                     if (data) {
                         MultiLineChart(data, {

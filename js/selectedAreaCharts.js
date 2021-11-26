@@ -4,15 +4,16 @@ export function showSelectedInfo(d3Selected) {
     console.log("selected area: " + d3Selected.size())
     let data = d3Selected.data()
     let [min, max] = d3.extent(data, d => d.corrvalue)
-    let range = (Math.abs(max) + Math.abs(min)) / 100
-    let groupedData = d3.groups(data, d => parseInt(d.corrvalue / range));
+    let range = (Math.abs(max) + Math.abs(min)) / 700
+    let groupedData = d3.groups(data, d => Math.floor(d.corrvalue / range)); // JS 有-0 向下取整才不会碰到-0
     groupedData = groupedData.sort((a, b) => {
         return a[0] - b[0]
     })
     let lc = LineChart(groupedData, {
-        x: d => d[0],
+        x: d => d[0] * range,
         y: d => d[1].length,
-        xType: d3.scaleLinear
+        xType: d3.scaleLinear,
+        color: "gray"
     })
     while (containerDom.childElementCount > 0) {
         containerDom.removeChild(containerDom.children[0]);
@@ -106,6 +107,20 @@ function LineChart(data, {
         .attr("stroke-linejoin", strokeLinejoin)
         .attr("stroke-opacity", strokeOpacity)
         .attr("d", line(I));
+
+    // y 轴 0 点位置
+    svg.append("line")
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("stroke-linecap", strokeLinecap)
+        .attr("stroke-linejoin", strokeLinejoin)
+        .attr("stroke-opacity", strokeOpacity)
+        .attr("x1", xScale(0))
+        .attr("x2", xScale(0))
+        .attr("y1", 0)
+        .attr("y2", height - marginBottom)
+
 
     return svg.node();
 }
