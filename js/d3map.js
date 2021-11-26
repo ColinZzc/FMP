@@ -69,6 +69,7 @@
 // }
 
 import {rampX} from "./utils.js";
+import {showSelectedInfo} from "./selectedAreaCharts.js";
 
 export default class Map {
     constructor(svg) {
@@ -143,6 +144,7 @@ export default class Map {
                 .attr("transform", "translate(" + (that._width - 170) + ",0)")
         }
 
+        // init elevation bar
         let groupData = d3.groups(data, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
         let elevationData = []
         for (const [elegroup, datum] of groupData) {
@@ -401,18 +403,22 @@ export default class Map {
     }
 
     onBrush({selection}) {
-        let points = d3.select(".points")
+        let circles = d3.select(".points").selectAll("circle")
+
         if (selection === null) {
-            points.selectAll("circle").style("opacity", 1)
+            circles.style("opacity", 1)
+            showSelectedInfo(circles)
         } else {
             let [[x0, y0], [x1, y1]] = selection;
-            points.selectAll("circle")
-                .style("opacity", function () {
-                    let cx = d3.select(this).attr("cx");
-                    let cy = d3.select(this).attr("cy");
-                    let selected = (x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1);
-                    return selected ? 1 : 0.1;
-                })
+            circles.style("opacity", 0.1)
+            let selectedCircles = circles.filter((data, index, nodelist) => {
+                let cx = nodelist[index].cx.baseVal.value;
+                let cy = nodelist[index].cy.baseVal.value;
+                let selected = (x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1);
+                return selected
+            })
+            selectedCircles.style("opacity", 1)
+            showSelectedInfo(selectedCircles)
         }
     }
 }
