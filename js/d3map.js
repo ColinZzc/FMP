@@ -138,27 +138,31 @@ export default class Map {
         let that = this;
         let svg = that._svg
 
-        if (svg.select(".elevationBar").empty()) {
-            svg.append("g")
-                .attr("class", "elevationBar")
-                .attr("transform", "translate(" + (that._width - 170) + ",0)")
-        }
+        // init elevation bar & brash
+        {
+            if (svg.select(".elevationBar").empty()) {
+                svg.append("g")
+                    .attr("class", "elevationBar")
+                    .attr("transform", "translate(" + (that._width - 170) + ",0)")
+            }
+            let groupData = d3.groups(data, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
+            let elevationData = []
+            for (const [elegroup, datum] of groupData) {
+                let newDatum = {}
+                newDatum.elegroup = elegroup
+                newDatum.avgcorr = d3.mean(datum, d => d.corrvalue)
+                // newDatum.data = datum
+                elevationData.push(newDatum)
+            }
+            elevationData.sort((a, b) => {
+                return b.elegroup - a.elegroup
+            }) //从高到低
+            // {elegroup: 40, avgcorr: -0.2750584225563381, data: Array(355)}
+            this.renderElevationBar(elevationData, svg.select(".elevationBar"))
 
-        // init elevation bar
-        let groupData = d3.groups(data, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
-        let elevationData = []
-        for (const [elegroup, datum] of groupData) {
-            let newDatum = {}
-            newDatum.elegroup = elegroup
-            newDatum.avgcorr = d3.mean(datum, d => d.corrvalue)
-            // newDatum.data = datum
-            elevationData.push(newDatum)
+            // clean brash
+            d3.select(".brush").call(that._brush.move, null);
         }
-        elevationData.sort((a, b) => {
-            return b.elegroup - a.elegroup
-        }) //从高到低
-        // {elegroup: 40, avgcorr: -0.2750584225563381, data: Array(355)}
-        this.renderElevationBar(elevationData, svg.select(".elevationBar"))
 
         let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
         let points = svg.select(".points");

@@ -5,7 +5,7 @@
 
 import {showOnMap} from "./chineseMap.js";
 
-export function LineChart(data, {
+export function MultiLineChart(data, {
     x = d => d.bucketid, // given d in data, returns the (temporal) x-value
     y = d => d.bucket_count, // given d in data, returns the (quantitative) y-value
     z = d => d.month, // given d in data, returns the (categorical) z-value

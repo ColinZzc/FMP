@@ -1,6 +1,6 @@
-import {LineChart} from "./D3LineChart.js";
+import {MultiLineChart} from "./MultLineChart.js";
 import {windChart} from "./windChart.js";
-import {const_value} from "./const.js";
+import {showOnMap} from "./chineseMap.js";
 
 let matArea = document.getElementById("corrMat")
 let meteorology = ["temp", "rh", "psfc", "wind"]
@@ -41,10 +41,11 @@ for (const meteorologyKey of meteorology) {
         let box = document.createElement("div")
         box.className = "matBox"
         box.id = met_pol
-        // box.onclick(showOnMap)
         row.appendChild(box)
         corrMat(box, met_pol)
     }
+    // 初始化渲染地图
+    showOnMap(2013, 1, "temp_pm25")
 }
 
 export function corrMat(div, met_pol) {
@@ -62,7 +63,7 @@ export function corrMat(div, met_pol) {
         airDB.get_bucket_by_feature_year(met_pol)
             .then(data => {
                 if (data) {
-                    let lc = LineChart(data, {
+                    let lc = MultiLineChart(data, {
                         chartID: met_pol,
                     })
                     div.appendChild(lc)
@@ -90,7 +91,7 @@ export function updateMat(year) {
             airDB.get_bucket_by_feature_year(met_pol)
                 .then(data => {
                     if (data) {
-                        LineChart(data, {
+                        MultiLineChart(data, {
                             chartID: met_pol,
                             svg: d3.select("#" + met_pol).select("svg")
                         })
