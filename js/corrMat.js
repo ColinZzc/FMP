@@ -49,6 +49,7 @@ for (const meteorologyKey of meteorology) {
 
 export function corrMat(div, met_pol) {
     if ("wind" === met_pol.slice(0, 4)) {
+        return
         airDB.get_bucket_by_feature_year(met_pol)
             .then(data => {
                 if (data) {

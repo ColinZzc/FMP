@@ -77,6 +77,8 @@ export default class Map {
         this._projection = d3.geoMercator().translate([this._width / 2, this._height / 2]).center([105, 38]).scale(490);
         this._path = d3.geoPath().projection(this._projection);
         this._svg = svg;
+        this._mapArea = null;
+        this._brush = d3.brush()
     }
 
     initMap() {
@@ -97,17 +99,24 @@ export default class Map {
         //     })).on("dblclick.zoom", null)//禁用双击放大
         // //.on('mousedown.zoom',null)//禁用拖拽
 
-        let map = svg.select(".map");
-        if (map.empty()) {
-            map = svg.append("g")
+        that._mapArea = svg.select(".mapArea");
+        let mapArea = that._mapArea
+        if (mapArea.empty()) {
+            mapArea = svg.append("g")
                 .attr("class", "mapArea")
                 .attr("transform", `translate(${mapHorShift},${mapVerShift})`)
-                .append("g")
+            mapArea.append("g")
                 .attr("class", "map")
-
+            mapArea.append("g")
+                .attr("class", "points")
+            mapArea.append("g")
+                .attr("class", "brush")
+                .call(this._brush)
+            this._brush.on("end", this.onBrush)
         }
         //解析地理位置json.map
         d3.json(L_json).then(function (json) {
+            let map = mapArea.select(".map")
             map.selectAll("path")
                 .data(json.features)
                 .enter()
@@ -170,10 +179,17 @@ export default class Map {
             .attr("fill", function (d) {
                 return d3.interpolateRdBu(linear(d["corrvalue"]))
             })
-            .attr("transform", function (d) {
+            // .attr("transform", function (d) {
+            //     //计算标注点的位置
+            //     var coor = that._projection([d.lon, d.lat]);
+            //     return "translate(" + coor[0] + "," + coor[1] + ")";
+            // });
+            .attr("cx", function (d) {
                 //计算标注点的位置
-                var coor = that._projection([d.lon, d.lat]);
-                return "translate(" + coor[0] + "," + coor[1] + ")";
+                return that._projection([d.lon, d.lat])[0];
+            })
+            .attr("cy", function (d) {
+                return that._projection([d.lon, d.lat])[1];
             });
     }
 
@@ -238,7 +254,7 @@ export default class Map {
         let maxCorr = extent[1].toFixed(2)
         let widthScale = d3.scaleLinear()
             .range([0, width])
-            .domain([0, Math.abs(maxCorr)+Math.abs(minCorr)])
+            .domain([0, Math.abs(maxCorr) + Math.abs(minCorr)])
 
         let yAxisshift = widthScale(Math.abs(minCorr)) + paddingLeft
 
@@ -261,6 +277,8 @@ export default class Map {
         let newEnder = Yaxis.enter()
             .append("line")
         Yaxis.merge(newEnder)
+            .transition()
+            .duration(500)
             .attr("class", "Yaxis")
             .attr("stroke", "black")
             .attr("stroke-width", stroke_width)
@@ -285,6 +303,8 @@ export default class Map {
         newEnder = xLabel.enter()
             .append("text")
         xLabel.merge(newEnder)
+            .transition()
+            .duration(500)
             .attr("class", "xLabel")
             .attr("x", paddingLeft)
             .attr("y", paddingTop - 10)
@@ -319,6 +339,8 @@ export default class Map {
         newEnder = xminNum.enter()
             .append("text")
         xminNum.merge(newEnder)
+            .transition()
+            .duration(500)
             .attr("class", "xminNum")
             .attr("x", 25)
             .attr("y", height + paddingTop + 5 + numbersize * 2)
@@ -339,6 +361,8 @@ export default class Map {
         newEnder = xmaxNum.enter()
             .append("text")
         xmaxNum.merge(newEnder)
+            .transition()
+            .duration(500)
             .attr("class", "xmaxNum")
             .attr("x", width + paddingLeft - 25)
             .attr("y", height + paddingTop + 5 + numbersize * 2)
@@ -352,6 +376,8 @@ export default class Map {
         newEnder = join.enter()
             .append("rect")
         join.merge(newEnder)
+            .transition()
+            .duration(500)
             .attr("fill", d => {
                 return d3.interpolateRdBu(colorValueScale(d.avgcorr))
             })
@@ -372,5 +398,21 @@ export default class Map {
             })
 
         return container
+    }
+
+    onBrush({selection}) {
+        let points = d3.select(".points")
+        if (selection === null) {
+            points.selectAll("circle").style("opacity", 1)
+        } else {
+            let [[x0, y0], [x1, y1]] = selection;
+            points.selectAll("circle")
+                .style("opacity", function () {
+                    let cx = d3.select(this).attr("cx");
+                    let cy = d3.select(this).attr("cy");
+                    let selected = (x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1);
+                    return selected ? 1 : 0.1;
+                })
+        }
     }
 }
