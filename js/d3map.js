@@ -80,6 +80,7 @@ export default class Map {
         this._svg = svg;
         this._mapArea = null;
         this._brush = d3.brush()
+        this._title = null
     }
 
     initMap() {
@@ -95,10 +96,6 @@ export default class Map {
             .attr("height", that._height)
             .attr("viewBox", [0, 0, that._width, that._height])
             .attr("style", "max-width: 100%; height: auto;")
-        //     .call(d3.zoom().scaleExtent([1, 8]).on("zoom", function () {
-        //         // svg.attr("transform", d3.event.transform)
-        //     })).on("dblclick.zoom", null)//禁用双击放大
-        // //.on('mousedown.zoom',null)//禁用拖拽
 
         that._mapArea = svg.select(".mapArea");
         let mapArea = that._mapArea
@@ -112,9 +109,16 @@ export default class Map {
                 .attr("class", "points")
             mapArea.append("g")
                 .attr("class", "brush")
-                .call(this._brush)
-            this._brush.on("end", this.onBrush)
+                .call(that._brush)
+            that._brush.on("end", this.onBrush)
         }
+
+        that._title = mapArea.append("text")
+            .attr("class", "mapTitle")
+            .text("title")
+            .attr("font-size", 30)
+            .attr("transform", `translate(${200},${50})`)
+
         //解析地理位置json.map
         d3.json(L_json).then(function (json) {
             let map = mapArea.select(".map")
@@ -133,12 +137,12 @@ export default class Map {
         this.renderLegend()
     }
 
-    async renderPoints(data, met_pol) {
+    async renderPoints(data, year, month, met_pol) {
 
         let that = this;
         let svg = that._svg
 
-        // init elevation bar & brash
+        // init elevation bar & brash & map title
         {
             if (svg.select(".elevationBar").empty()) {
                 svg.append("g")
@@ -162,6 +166,9 @@ export default class Map {
 
             // clean brash
             d3.select(".brush").call(that._brush.move, null);
+
+            //map title
+            that._title.text("" + year + "-" + month + " " + met_pol)
         }
 
         let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
@@ -197,6 +204,9 @@ export default class Map {
             .attr("cy", function (d) {
                 return that._projection([d.lon, d.lat])[1];
             });
+
+        // 画完地图默认全选
+        this.onBrush({undefined})
     }
 
     renderLegend() {
@@ -409,9 +419,11 @@ export default class Map {
     onBrush({selection}) {
         let circles = d3.select(".points").selectAll("circle")
 
-        if (selection === null) {
-            circles.style("opacity", 1)
-            showSelectedInfo(circles)
+        if (selection == null) {
+            if (!circles.empty()) {
+                circles.style("opacity", 1)
+                showSelectedInfo(circles)
+            }
         } else {
             let [[x0, y0], [x1, y1]] = selection;
             circles.style("opacity", 0.1)

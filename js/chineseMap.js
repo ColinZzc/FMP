@@ -8,7 +8,7 @@ export function showOnMap(year, month, met_pol) {
   airDB.get_corr_by_date(year, month, met_pol)
     .then(data => {
         if (data) {
-            chineseMap.renderPoints(data, met_pol);
+            chineseMap.renderPoints(data, year, month, met_pol);
         }
     })
 }
