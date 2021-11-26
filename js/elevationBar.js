@@ -1,70 +1,104 @@
 export function elevationBar(data, container) {
-    let width = 100;
-    let height = 100;
-    let svg
-    if (typeof (container) == 'undefined') {
-        // initWind() 圆底坐标轴 画布平移
-        container = d3.create('svg')
-            .attr("width", width)
-            .attr("height", height)
-            .attr("viewBox", [0, 0, width, height])
-            .attr("style", "max-width: 100%; height: auto;")
+    let width = 100
+    let height = 500
+    let paddingLeft = 10
+    let paddingRight = 10
+    let paddingTop = 30
+    let paddingButton = 20
+    let stroke_width = 1
+    let labelsize = 5
+    let numbersize = 5
 
-        svg = container.append('g')
-            .attr(
-                "transform",
-                "translate(" + width / 2 + "," + height / 2 + ")"
-            )
+    let [min, max] = d3.extent(data, d => d.avgcorr)
+    let widthScale = d3.scaleLinear()
+        .range([0, width])
+        .domain([0, max - min])
 
-        svg.append("g")
-            .attr("class", "backgroundCircle")
-            .selectAll("circle")
-            .data(d3.range(0,width/2+1,25)) // [0, 25, 50]
-            .enter()
-            .append("circle")
-            .attr("r", d => d)
-            .attr("class", "backgroundCircle")
-            .style("stroke", "#ccc")
-            .style("stroke-dasharray", "3,3")
-            .style("opacity", 0.5)
-            .style("fill", "none");
-    }else{
-        svg = container.select("g")
-    }
+    let yAxisshift = widthScale(-min) + paddingLeft
 
+    let positionScale = d3.scaleBand()
+        .range([0, height])
+        .domain(data.map(d => d.elegroup))
+        .padding(0.3)
 
+    let colorValueScale = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
 
-    // 画线 方向->方向; 相关性->长度；透明度->数量，季节->颜色
-    let color = d3.scaleOrdinal()
-        // 天文学上以春分、夏至、秋分、冬至分别作为春、夏、秋、冬四季的开始
-        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
-        //The green is for spring, yellow for the summer sun, orange for autumn and blue for winter.
-        .range(["#A7FC01", "#A7FC01", "#A7FC01",
-            "#FFFE00", "#FFFE00", "#FFFE00",
-            "#FF7F00", "#FF7F00", "#FF7F00",
-            "#01BFFF", "#01BFFF", "#01BFFF"]) // stroke color of line
+    container = container.append('svg')
+        .attr("width", width + paddingLeft + paddingRight)
+        .attr("height", height + paddingButton + paddingTop)
 
-    let season = d3.scaleOrdinal()
-        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
-        .range(["spring", "spring", "spring",
-            "summer", "summer", "summer",
-            "autumn", "autumn", "autumn",
-            "winter", "winter", "winter"])
-
-    svg.append("g")
-        .attr("class","windPoints")
-        .selectAll(".windPoint")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("class", d=>{
-            return season(d.month.slice(-2))+" windPoint"
+    container.append("line")
+        .attr("stroke", "black")
+        .attr("stroke-width", stroke_width)
+        .attr("x1", yAxisshift)
+        .attr("x2", yAxisshift)
+        .attr("y1", paddingTop - 5)
+        .attr("y2", height + paddingTop + 5)
+    container.append("line")
+        .attr("stroke", "black")
+        .attr("stroke-width", stroke_width)
+        .attr("x1", paddingLeft)
+        .attr("x2", width + paddingLeft)
+        .attr("y1", height + paddingTop + 5)
+        .attr("y2", height + paddingTop + 5)
+    container.append("text")
+        .attr("x", paddingLeft - 5)
+        .attr("y", paddingTop - 10)
+        .attr("font-size", labelsize)
+        .text("<--Correlation-->")
+    container.append("text")
+        .attr("x", width + paddingLeft + 5)
+        .attr("y", height / 2)
+        .attr("transform", function (d) {
+            return "rotate(" + 90 + " " + (width + paddingLeft + 5) + "," + height / 2 + ")";
         })
-        .attr("r",0.1)
-        .attr("stroke", d => color(d.month.slice(-2)))
-        .attr('opacity', const_value.windPointsOpacity)
-        .attr('cx', d => d.v * width / 2) //x
-        .attr('cy', d => d.u * width / 2) //y
+        .attr("font-size", labelsize)
+        .text("<--Elevation-->")
+    container.append("text")
+        .attr("x", 5)
+        .attr("y", height + paddingTop + 5 + numbersize)
+        .attr("font-size", numbersize)
+        .text("min")
+    container.append("text")
+        .attr("x", 5)
+        .attr("y", height + paddingTop + 5 + numbersize * 2)
+        .attr("font-size", numbersize)
+        .text(min.toFixed(2))
+    container.append("text")
+        .attr("x", width + 5)
+        .attr("y", height + paddingTop + 5 + numbersize)
+        .attr("font-size", numbersize)
+        .text("max")
+    container.append("text")
+        .attr("x", width + 5)
+        .attr("y", height + paddingTop + 5 + numbersize * 2)
+        .attr("font-size", numbersize)
+        .text(max.toFixed(2))
 
-    return container.node()
+    let join = container
+        .selectAll("rect")
+        .data(data)
+
+    join.enter()
+        .append("rect")
+        .attr("fill", d => {
+            return d3.interpolateRdBu(colorValueScale(d.avgcorr))
+        })
+        .attr("width", d => {
+            return widthScale(Math.abs(d.avgcorr))
+        })
+        .attr("height", positionScale.bandwidth())
+        .attr("y", d => positionScale(d.elegroup) + paddingTop)
+        .attr("x", d => {
+            let shiftRight = 1
+            if (d.avgcorr < 0) {
+                //负数方y轴左边
+                shiftRight = shiftRight + widthScale(Math.abs(d.avgcorr))
+                return yAxisshift - shiftRight
+            } else {
+                return yAxisshift + shiftRight
+            }
+        })
+
+    return container
 }

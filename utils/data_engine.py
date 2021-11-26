@@ -26,7 +26,7 @@ def get_corrcoef_json(year, month, met_pol):
             '''
     else:
         sql = f'''
-            SELECT c.LAT , c.LON , c.{met_pol}, cast(l.elevation/103 as int) eleGroup
+            SELECT c.LAT , c.LON , c.{met_pol} corrValue, cast(l.elevation/103 as int) eleGroup
             from corrcoef{YearMonth} c join locations l on 
             c.lat = l.lat and c.lon = l.lon
             '''

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
+
+    <title>Title</title>
+</head>
+<div>
+    <div id="chart"></div>
+
+
+</div>
+</body>
+<footer>
+    <script type="module">
+        import DB from "../js/DB.js"
+
+        window.airDB = new DB()
+    </script>
+    <script type="module">
+        let chart = d3.select("#chart")
+        airDB.get_corr_from_server(2014, 1, "temp_co")
+            .then(data => {
+                // one row: {lat: 19.24, lon: 109.99, corrValue: -0.6040251428, elegroup: 2}
+                data = d3.groups(data, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
+                let newData = []
+                for (const [elegroup, datum] of data) {
+                    let newDatum = {}
+                    newDatum.elegroup = elegroup
+                    newDatum.avgcorr = d3.mean(datum, d => d.corrvalue)
+                    // newDatum.data = datum
+                    newData.push(newDatum)
+                }
+                newData.sort((a, b) => {
+                    return b.elegroup - a.elegroup
+                }) //从高到低
+                // {elegroup: 40, avgcorr: -0.2750584225563381, data: Array(355)}
+                render(newData, chart)
+            })
+
+        function render(data, container) {
+            let width = 80
+            let height = 450
+            let paddingLeft = 50
+            let paddingRight = 40
+            let paddingTop = 30
+            let paddingButton = 50
+            let stroke_width = 1
+            let labelsize = 20
+            let numbersize = 20
+
+            let [min, max] = d3.extent(data, d => d.avgcorr)
+            let widthScale = d3.scaleLinear()
+                .range([0, width])
+                .domain([0, max - min])
+
+            let yAxisshift = widthScale(-min) + paddingLeft
+
+            let positionScale = d3.scaleBand()
+                .range([0, height])
+                .domain(data.map(d => d.elegroup))
+                .padding(0.3)
+
+            let colorValueScale = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
+
+            container = container.append('svg')
+                .attr("width", width + paddingLeft + paddingRight)
+                .attr("height", height + paddingButton + paddingTop)
+
+            container.append("line")
+                .attr("stroke", "black")
+                .attr("stroke-width", stroke_width)
+                .attr("x1", yAxisshift)
+                .attr("x2", yAxisshift)
+                .attr("y1", paddingTop - 5)
+                .attr("y2", height + paddingTop + 5)
+            container.append("line")
+                .attr("stroke", "black")
+                .attr("stroke-width", stroke_width)
+                .attr("x1", paddingLeft)
+                .attr("x2", width + paddingLeft)
+                .attr("y1", height + paddingTop + 5)
+                .attr("y2", height + paddingTop + 5)
+            container.append("text")
+                .attr("x", 0)
+                .attr("y", paddingTop - 10)
+                .attr("font-size", labelsize)
+                .text("<--Correlation-->")
+            container.append("text")
+                .attr("x", width + paddingLeft + 5)
+                .attr("y", height / 2)
+                .attr("transform", function (d) {
+                    return "rotate(" + 90 + " " + (width + paddingLeft + 5) + "," + height / 2 + ")";
+                })
+                .attr("font-size", labelsize)
+                .text("<--Elevation-->")
+            container.append("text")
+                .attr("x", paddingLeft-25)
+                .attr("y", height + paddingTop + 5 + numbersize)
+                .attr("font-size", numbersize)
+                .text("min")
+            container.append("text")
+                .attr("x", paddingLeft-25)
+                .attr("y", height + paddingTop + 5 + numbersize * 2)
+                .attr("font-size", numbersize)
+                .text(min.toFixed(2))
+            container.append("text")
+                .attr("x", width+paddingLeft-25)
+                .attr("y", height + paddingTop + 5 + numbersize)
+                .attr("font-size", numbersize)
+                .text("max")
+            container.append("text")
+                .attr("x", width+paddingLeft-25)
+                .attr("y", height + paddingTop + 5 + numbersize * 2)
+                .attr("font-size", numbersize)
+                .text(max.toFixed(2))
+
+
+            let join = container
+                .selectAll("rect")
+                .data(data)
+
+            join.enter()
+                .append("rect")
+                .attr("fill", d => {
+                    return d3.interpolateRdBu(colorValueScale(d.avgcorr))
+                })
+                .attr("width", d => {
+                    return widthScale(Math.abs(d.avgcorr))
+                })
+                .attr("height", positionScale.bandwidth())
+                .attr("y", d => positionScale(d.elegroup) + paddingTop)
+                .attr("x", d => {
+                    let shiftRight = 1
+                    if (d.avgcorr < 0) {
+                        //负数方y轴左边
+                        shiftRight = shiftRight + widthScale(Math.abs(d.avgcorr))
+                        return yAxisshift - shiftRight
+                    } else {
+                        return yAxisshift + shiftRight
+                    }
+                })
+
+            return container
+        }
+    </script>
+    <!--    <script type="module">-->
+    <!--        import {windChart} from "../js/windChart.js";-->
+
+    <!--        let chart = document.getElementById("chart")-->
+    <!--        // let feature = 'wind_o3'-->
+    <!--        airDB.get_bucket_by_feature_year(feature)-->
+    <!--        .then(data => {-->
+    <!--            let lc;-->
+    <!--            if (data) {-->
+    <!--                if ("wind" === feature.slice(0, 4)) {-->
+    <!--                    lc = windChart(data, feature)-->
+    <!--                }-->
+
+    <!--                chart.appendChild(lc)-->
+    <!--            }-->
+    <!--        })-->
+    <!--    </script>-->
+
+
+</footer>
+</html>

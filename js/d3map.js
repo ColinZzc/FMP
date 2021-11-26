@@ -81,7 +81,7 @@ export default class Map {
 
     initMap() {
 
-        let mapHorShift = -10
+        let mapHorShift = -40
         let mapVerShift = -10
 
         let that = this;
@@ -121,13 +121,35 @@ export default class Map {
         })
 
         this.renderLegend()
-        this.renderElevationBar()
     }
 
     async renderPoints(data, met_pol) {
+
         let that = this;
-        let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
         let svg = that._svg
+
+        if (svg.select(".elevationBar").empty()) {
+            svg.append("g")
+                .attr("class", "elevationBar")
+                .attr("transform", "translate(" + (that._width - 170) + ",0)")
+        }
+
+        let groupData = d3.groups(data, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
+        let elevationData = []
+        for (const [elegroup, datum] of groupData) {
+            let newDatum = {}
+            newDatum.elegroup = elegroup
+            newDatum.avgcorr = d3.mean(datum, d => d.corrvalue)
+            // newDatum.data = datum
+            elevationData.push(newDatum)
+        }
+        elevationData.sort((a, b) => {
+            return b.elegroup - a.elegroup
+        }) //从高到低
+        // {elegroup: 40, avgcorr: -0.2750584225563381, data: Array(355)}
+        this.renderElevationBar(elevationData, svg.select(".elevationBar"))
+
+        let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
         let points = svg.select(".points");
         if (points.empty()) {
             points = svg.select(".mapArea")
@@ -146,7 +168,7 @@ export default class Map {
             .transition()
             .duration(500)
             .attr("fill", function (d) {
-                return d3.interpolateRdBu(linear(d[met_pol]))
+                return d3.interpolateRdBu(linear(d["corrvalue"]))
             })
             .attr("transform", function (d) {
                 //计算标注点的位置
@@ -159,7 +181,7 @@ export default class Map {
 
         let width = 150
         let height = 15
-        let marginLeft = 10
+        let marginLeft = 360
         let marginTop = 450
 
         let that = this;
@@ -200,49 +222,155 @@ export default class Map {
             .call(xAxis)
     }
 
-    renderElevationBar() {
+    async renderElevationBar(data, container) {
+        let width = 80
+        let height = 420
+        let paddingLeft = 50
+        let paddingRight = 40
+        let paddingTop = 30
+        let paddingButton = 50
+        let stroke_width = 1
+        let labelsize = 20
+        let numbersize = 20
 
-        let width = 30
-        let height = 400
-        let marginLeft = 10
-        let marginTop = 450
+        let extent = d3.extent(data, d => d.avgcorr)
+        let minCorr = extent[0].toFixed(2)
+        let maxCorr = extent[1].toFixed(2)
+        let widthScale = d3.scaleLinear()
+            .range([0, width])
+            .domain([0, Math.abs(maxCorr)+Math.abs(minCorr)])
 
-        let that = this;
-        let svg = that._svg
+        let yAxisshift = widthScale(Math.abs(minCorr)) + paddingLeft
 
-        let eleBar = svg.select(".elevationBar");
-        if (eleBar.empty()) {
-            eleBar = svg.append("g").attr("class", "elevationBar");
+        let positionScale = d3.scaleBand()
+            .range([0, height])
+            .domain(data.map(d => d.elegroup))
+            .padding(0.3)
+
+        let colorValueScale = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
+
+        if (container.select("svg").empty()) {
+            container.append('svg')
+                .attr("width", width + paddingLeft + paddingRight)
+                .attr("height", height + paddingButton + paddingTop)
         }
+        container = container.select('svg')
 
-        eleBar.selectAll(".title")
-            .data(["correlation coefficient"])
-            .enter()
+        let Yaxis = container.selectAll(".Yaxis")
+            .data([{"yAxisshift": yAxisshift}])
+        let newEnder = Yaxis.enter()
+            .append("line")
+        Yaxis.merge(newEnder)
+            .attr("class", "Yaxis")
+            .attr("stroke", "black")
+            .attr("stroke-width", stroke_width)
+            .attr("x1", d => d.yAxisshift)
+            .attr("x2", d => d.yAxisshift)
+            .attr("y1", paddingTop - 5)
+            .attr("y2", height + paddingTop + 5)
+        let Xaxis = container.selectAll(".Xaxis")
+            .data([["one x axis"]])
+        newEnder = Xaxis.enter()
+            .append("line")
+        Xaxis.merge(newEnder)
+            .attr("class", "Xaxis")
+            .attr("stroke", "black")
+            .attr("stroke-width", stroke_width)
+            .attr("x1", paddingLeft)
+            .attr("x2", width + paddingLeft)
+            .attr("y1", height + paddingTop + 5)
+            .attr("y2", height + paddingTop + 5)
+        let xLabel = container.selectAll(".xLabel")
+            .data([[""]])
+        newEnder = xLabel.enter()
             .append("text")
-            .attr("class", "title")
-            .attr("transform", `translate(${marginLeft},${marginTop - 10})`)
-            .attr("fill", "currentColor")
-            .attr("font-weight", "light")
-            .attr('font-size', 14)
-            .text(d => d);
+        xLabel.merge(newEnder)
+            .attr("class", "xLabel")
+            .attr("x", paddingLeft)
+            .attr("y", paddingTop - 10)
+            .attr("font-size", labelsize)
+        // .text("<--Correlation-->")
+        let yLabel = container.selectAll(".yLabel")
+            .data([[""]])
+        newEnder = yLabel.enter()
+            .append("text")
+        yLabel.merge(newEnder)
+            .attr("class", "yLabel")
+            .attr("x", width + paddingLeft + 5)
+            .attr("y", 150)
+            .attr("transform",
+                "rotate(" + 90 +
+                " " + (width + paddingLeft + 5) +
+                "," + 150 + ")")
+            .attr("font-size", labelsize)
+            .text("<--Elevation-->")
+        let xmin = container.selectAll(".xmin")
+            .data([[""]])
+        newEnder = xmin.enter()
+            .append("text")
+        xmin.merge(newEnder)
+            .attr("class", "xmin")
+            .attr("x", 25)
+            .attr("y", height + paddingTop + 5 + numbersize)
+            .attr("font-size", numbersize)
+            .text("min")
+        let xminNum = container.selectAll(".xminNum")
+            .data([[minCorr]])
+        newEnder = xminNum.enter()
+            .append("text")
+        xminNum.merge(newEnder)
+            .attr("class", "xminNum")
+            .attr("x", 25)
+            .attr("y", height + paddingTop + 5 + numbersize * 2)
+            .attr("font-size", numbersize)
+            .text(d => d)
+        let xmax = container.selectAll(".xmax")
+            .data([[""]])
+        newEnder = xmax.enter()
+            .append("text")
+        xmax.merge(newEnder)
+            .attr("class", "xmax")
+            .attr("x", width + paddingLeft - 25)
+            .attr("y", height + paddingTop + 5 + numbersize)
+            .attr("font-size", numbersize)
+            .text("max")
+        let xmaxNum = container.selectAll(".xmaxNum")
+            .data([[maxCorr]])
+        newEnder = xmaxNum.enter()
+            .append("text")
+        xmaxNum.merge(newEnder)
+            .attr("class", "xmaxNum")
+            .attr("x", width + paddingLeft - 25)
+            .attr("y", height + paddingTop + 5 + numbersize * 2)
+            .attr("font-size", numbersize)
+            .text(d => d)
 
-        legend.selectAll("image")
-            .data([rampX(d3.interpolateRdBu).toDataURL()])
-            .enter()
-            // .append("g").attr("class", "image").attr("width",200).attr("height",20)
-            .append("image")
-            .attr("preserveAspectRatio", "none")
-            .attr("transform", `translate(${marginLeft},${marginTop})`)
-            .style("height", height)
-            .style("width", width)
-            .attr("xlink:href", d => d);
-        let scale = d3.scaleLinear().range([0, width]).domain([-1, 1])
-        let xAxis = d3.axisBottom(scale).ticks(5).tickFormat(d => d)
-        legend.selectAll(".xAxis")
-            .data([1])
-            .enter()
-            .append("g").attr("class", "xAxis")
-            .attr("transform", `translate(${marginLeft},${marginTop + height + 1})`)
-            .call(xAxis)
+        let join = container
+            .selectAll("rect")
+            .data(data)
+
+        newEnder = join.enter()
+            .append("rect")
+        join.merge(newEnder)
+            .attr("fill", d => {
+                return d3.interpolateRdBu(colorValueScale(d.avgcorr))
+            })
+            .attr("width", d => {
+                return widthScale(Math.abs(d.avgcorr))
+            })
+            .attr("height", positionScale.bandwidth())
+            .attr("y", d => positionScale(d.elegroup) + paddingTop)
+            .attr("x", d => {
+                let shiftRight = 1
+                if (d.avgcorr < 0) {
+                    //负数方y轴左边
+                    shiftRight = shiftRight + widthScale(Math.abs(d.avgcorr))
+                    return yAxisshift - shiftRight
+                } else {
+                    return yAxisshift + shiftRight
+                }
+            })
+
+        return container
     }
 }
