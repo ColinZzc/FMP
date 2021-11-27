@@ -3,7 +3,7 @@ import {windChart} from "./windChart.js";
 import {showOnMap} from "./chineseMap.js";
 
 let matArea = document.getElementById("corrMat")
-let meteorology = ["temp", "rh", "psfc", "wind"]
+let meteorology = ["temp", "rh", "psfc"] //, "wind"]
 let pollution = ["pm25", "pm10", "so2", "no2", "co", "o3"]
 
 //标题行
@@ -50,7 +50,6 @@ for (const meteorologyKey of meteorology) {
 
 export function corrMat(div, met_pol) {
     if ("wind" === met_pol.slice(0, 4)) {
-        return
         airDB.get_bucket_by_feature_year(met_pol)
             .then(data => {
                 if (data) {
@@ -80,7 +79,6 @@ export function updateMat(year) {
     for (const matListElement of matList) {
         let met_pol = matListElement.id
         if ("wind" === met_pol.slice(0, 4)) {
-            return
             airDB.get_bucket_by_feature_year(met_pol, year)
                 .then(data => {
                     if (data) {

@@ -1,4 +1,7 @@
-let containerDom = document.getElementById("selected")
+import {windChart} from "./windChart.js";
+
+let singleLineChart = d3.select("#singleLineChart")
+let windContainer = d3.select("#windChart")
 
 export function showSelectedInfo(d3Selected) {
     console.log("selected area: " + d3Selected.size())
@@ -15,10 +18,31 @@ export function showSelectedInfo(d3Selected) {
         xType: d3.scaleLinear,
         color: "gray"
     })
-    while (containerDom.childElementCount > 0) {
-        containerDom.removeChild(containerDom.children[0]);
+
+    singleLineChart.select("svg").remove()
+    singleLineChart.node().appendChild(lc)
+
+
+    // wind chart
+    let met_pol = "wind_" + Window.currentInfo.met_pol.split("_")[1]
+
+    let filteredData = []
+    let limitDataVolume = 2000
+    if (data.length > limitDataVolume) {
+        const con = parseInt(data.length / limitDataVolume)
+        filteredData = data.filter((d, i) => {
+            return i % con == 0
+        })
+    } else {
+        filteredData = data
     }
-    containerDom.appendChild(lc)
+
+    if (windContainer.select("svg").empty()) {
+        let wc = windChart(filteredData, met_pol)
+        windContainer.node().appendChild(wc)
+    } else {
+        windChart(filteredData, met_pol, windContainer.select("svg"))
+    }
 }
 
 function LineChart(data, {
@@ -31,7 +55,7 @@ function LineChart(data, {
     marginBottom = 30, // bottom margin, in pixels
     marginLeft = 40, // left margin, in pixels
     width = 1300, // outer width, in pixels
-    height = 200, // outer height, in pixels
+    height = 300, // outer height, in pixels
     xType = d3.scaleUtc, // the x-scale type
     xDomain, // [xmin, xmax]
     xRange = [marginLeft, width - marginRight], // [left, right]

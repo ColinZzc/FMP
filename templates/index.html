@@ -6,26 +6,56 @@
     <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+          integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <style>
+        body {
+            font: 15px sans-serif;
+            color: #444444;
+        }
+        div, button {
+            text-align: center;
+        }
 
+        div
+    </style>
     <title>Title</title>
 </head>
 <body bgcolor="#f0f8ff">
 <div>
     <div id="sra"></div>
-    <div style="display: grid; grid-template-columns: auto auto">
-        <div id="map"></div>
-        <div>
-            <div style="display: grid; grid-template-columns: auto auto auto auto">
-                <div id="spring">Spring 2 3 4</div>
-                <div id="summer">Summer 5 6 7 </div>
-                <div id="autumn">Autumn 8 9 10</div>
-                <div id="winter">Winter 11 12 1</div>
+    <div class="row">
+        <div id="map" class="col-lg-5"></div>
+        <div class="col-lg-7">
+            <div class="row">
+                <button id="spring" class="col-md-3">Spring</button>
+                <button id="summer" class="col-md-3">Summer</button>
+                <button id="autumn" class="col-md-3">Autumn</button>
+                <button id="winter" class="col-md-3">Winter</button>
+            </div>
+            <div class="row">
+                <button class="spring col-md-1">February</button>
+                <button class="spring col-md-1">March</button>
+                <button class="spring col-md-1">April</button>
+                <button class="summer col-md-1">May</button>
+                <button class="summer col-md-1">June</button>
+                <button class="summer col-md-1">July</button>
+                <button class="autumn col-md-1">August</button>
+                <button class="autumn col-md-1">September</button>
+                <button class="autumn col-md-1">October</button>
+                <button class="winter col-md-1">November</button>
+                <button class="winter col-md-1">December</button>
+                <button class="winter col-md-1">January</button>
+
             </div>
             <div id="corrMat"></div>
         </div>
 
     </div>
-    <div id="selected"></div>
+    <div id="selected" class="row">
+        <div id="singleLineChart" class="col-lg-8"></div>
+        <div id="windChart" class="col-lg-4"></div>
+    </div>
 
 
 </div>
@@ -39,6 +69,7 @@
     <script type="module" src="../js/sraList.js"></script>
     <script type="module" src="../js/chineseMap.js"></script>
     <script type="module" src="../js/corrMat.js"></script>
+    <script type="module" src="../js/selectedAreaCharts.js"></script>
 
 </footer>
 </html>

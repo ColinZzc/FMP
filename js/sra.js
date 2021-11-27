@@ -1,14 +1,14 @@
 import {updateMat} from "./corrMat.js";
 
 export function sra(data) {
-    const margin = {left: 30, right: 28, top: 80, bottom: 40};
+    const margin = {left: 0, right: 0, top: 0, bottom: 0};
     let formatMonth = d3.timeFormat("%b")
     let formatDay = function (d) {
         return formatMonth(new Date(2018, d, 0));
     };
-    let width = 210,
-        height = 160,
-        outerRadius = height / 2 - 5,
+    let width = 220,
+        height = 220,
+        outerRadius = height / 2 - 35, //减小一些留给文字
         innerRadius = 20;
     let angle = d3.scaleLinear().range([0, 2 * Math.PI]);
     let radius = d3.scaleLinear().range([innerRadius, outerRadius]);
@@ -39,14 +39,14 @@ export function sra(data) {
         });
 
     let SVGcanvas = d3.create("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom + 30)
-        .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
-        .style("-webkit-tap-highlight-color", "transparent")
+        .attr("width", width)
+        .attr("height", height)
+        // .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
+        // .style("-webkit-tap-highlight-color", "transparent")
 
     let svg = SVGcanvas.append('g').attr(
         "transform",
-        "translate(" + width / 2 + "," + (height + 80) / 2 + ")"
+        "translate(" + width / 2 + "," + height / 2 + ")"
     )
 
     let layers = stack(data);

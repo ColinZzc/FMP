@@ -169,6 +169,7 @@ export default class Map {
 
             //map title
             that._title.text("" + year + "-" + month + " " + met_pol)
+            Window.currentInfo = {"year": year, "month": month, "met_pol": met_pol}
         }
 
         let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);

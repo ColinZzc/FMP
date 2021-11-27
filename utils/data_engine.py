@@ -12,26 +12,39 @@ create or replace function addXYVector(x in number, y in number) return number i
 begin
     return sqrt(x*x+y*y);
 end;
+sql使用：
+SELECT LAT, LON,
+addxyvector(U_{pollution}, V_{pollution}) {met_pol}
+from corrcoef{YearMonth}
 '''
+
+
 # 某年某月所有相关性的数据 风速进行了计算
 def get_corrcoef_json(year, month, met_pol):
     YearMonth = str(year) + '%02d' % int(month)
+    pollution = met_pol.split("_")[-1]
     sql = ""
-    if "wind" in met_pol:
-        pollution = met_pol[4:]
+    if "wind" in met_pol: # TODO：暂未使用，与else sql合并
         sql = f'''
-            SELECT LAT, LON,
-            addxyvector(U_{pollution}, V_{pollution}) {met_pol}
-            from corrcoef{YearMonth}
+                SELECT LAT, LON,
+                addxyvector(U_{pollution}, V_{pollution}) {met_pol}
+                from corrcoef{YearMonth}
             '''
     else:
         sql = f'''
-            SELECT c.LAT , c.LON , c.{met_pol} corrValue, cast(l.elevation/103 as int) eleGroup
+            SELECT c.LAT , c.LON , c.{met_pol} corrValue, cast(l.elevation/103 as int) eleGroup, 
+            U_{pollution} U, V_{pollution} V
             from corrcoef{YearMonth} c join locations l on 
             c.lat = l.lat and c.lon = l.lon
             '''
-
     df = pd.read_sql_query(sql, engine)
+    # 坐标转换
+    for i in df.index: #操作耗时
+        u = df.loc[i, 'u']
+        v = df.loc[i, 'v']
+        x, y, _ = transform(v, u)
+        df.loc[i, 'u'] = y
+        df.loc[i, 'v'] = x
     logging.debug(f'''get corrcoef in {year} {month}, total data {str(df.shape[0])} lines.''')
     return df.to_json(orient='records')
 
@@ -40,12 +53,15 @@ def get_corrcoef_json(year, month, met_pol):
 def transform(v, u):
     x = None
     y = None
+    r = None
     if u == 0:
         y = 0
         x = v
+        r = v
     elif v == 0:
         x = 0
         y = u
+        r = u
     else:
         quadrant = 0
         originalLength = math.sqrt(u ** 2 + v ** 2)
@@ -79,7 +95,7 @@ def transform(v, u):
             y = -y
         elif quadrant == 4:
             x = -x
-    return x, y
+    return x, y, scaledLength
 
 
 # 相关性数据桶 某年每个月数据分布在不同相关性区间的数量
@@ -212,7 +228,6 @@ def get_bucket_json(feature, year=2013):
 
 # pollution 一年每月均值 for sra chart
 def get_avg_pollution_json(year=2013):
-
     # 优化速度，建了表 -> create table AVG2013 as
     # sql = f'''
     #         SELECT
