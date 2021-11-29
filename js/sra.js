@@ -1,15 +1,16 @@
 import {updateMat} from "./corrMat.js";
 
-export function sra(data) {
+export function sra(data, wid=150, hei=150) {
     const margin = {left: 0, right: 0, top: 0, bottom: 0};
     let formatMonth = d3.timeFormat("%b")
     let formatDay = function (d) {
         return formatMonth(new Date(2018, d, 0));
     };
-    let width = 220,
-        height = 220,
-        outerRadius = height / 2 - 35, //减小一些留给文字
-        innerRadius = 20;
+    let width = wid,
+        height = hei,
+        paddingButton = 40,
+        outerRadius = height / 2 - 20, //减小一些留给文字
+        innerRadius = 5;
     let angle = d3.scaleLinear().range([0, 2 * Math.PI]);
     let radius = d3.scaleLinear().range([innerRadius, outerRadius]);
 //6种污染物颜色
@@ -40,14 +41,16 @@ export function sra(data) {
 
     let SVGcanvas = d3.create("svg")
         .attr("width", width)
-        .attr("height", height)
-        // .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
-        // .style("-webkit-tap-highlight-color", "transparent")
+        .attr("height", height + paddingButton)
+    // .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
+    // .style("-webkit-tap-highlight-color", "transparent")
 
-    let svg = SVGcanvas.append('g').attr(
-        "transform",
-        "translate(" + width / 2 + "," + height / 2 + ")"
-    )
+    let svg = SVGcanvas
+        .append('g')
+        .attr(
+            "transform",
+            "translate(" + width / 2 + "," + height / 2 + ")"
+        )
 
     let layers = stack(data);
 
@@ -75,8 +78,8 @@ export function sra(data) {
         //  .scale(radius.copy().range([-innerRadius, -outerRadius]))
         //  .orient("left"))
         .append("text")
-        .attr("y", -innerRadius - 87)
-        .attr("dy", ".91em")
+        .attr("y", -outerRadius - 5) //-5 离最大值远一些
+        // .attr("dy", ".91em")
         .attr("text-anchor", "middle")
         .text(function (d) {
             return formatDay(d);
@@ -84,44 +87,21 @@ export function sra(data) {
 
 //      addCircleAxes = function () {
     let circleAxes = svg
-        .append("svg:g")
-        .attr("class", "circle");
+        .selectAll("circleAxes")
+        .data(d3.range(innerRadius, outerRadius, parseInt((outerRadius - innerRadius) / 4)));
 
-    circleAxes
-        .append("svg:circle")
-        .attr("r", 80)
-        .attr("class", "circle")
+    let newCircleAxes = circleAxes
+        .enter()
+        .append("circle")
+        .attr("class", "circleAxes")
         .style("stroke", "#ccc")
         .style("stroke-dasharray", "3,3")
         .style("opacity", 0.5)
         .style("fill", "none");
 
-    circleAxes
-        .append("svg:circle")
-        .attr("r", 56)
-        .attr("class", "circle")
-        .style("stroke", "#ccc")
-        .style("stroke-dasharray", "3,3")
-        .style("opacity", 0.5)
-        .style("fill", "none");
+    circleAxes.merge(newCircleAxes)
+        .attr("r", d => d)
 
-    circleAxes
-        .append("svg:circle")
-        .attr("r", 33)
-        .attr("class", "circle")
-        .style("stroke", "#ccc")
-        .style("stroke-dasharray", "3,3")
-        .style("opacity", 0.5)
-        .style("fill", "none");
-
-    circleAxes
-        .append("svg:circle")
-        .attr("r", 10)
-        .attr("class", "circle")
-        .style("stroke", "#ccc")
-        .style("stroke-dasharray", "3,3")
-        .style("opacity", 0.5)
-        .style("fill", "none");
 
     //------------------------------------------ create a tooltip---------------------------------------------------------
     let Tooltip = svg.selectAll(".toolTip")
@@ -129,10 +109,11 @@ export function sra(data) {
         .enter()
         .append("text")
         .attr("class", "toolTip")
-        .attr("x", -14)
-        .attr("y", 5)
+        .attr("text-anchor", "middle")
+        .attr("x", 0)
+        .attr("y", height / 2 + 20)
         .style("opacity", 1)
-        .style("font-size", 12)
+        .style("font-size", 20)
         .text(d => d)
         .on("click", (e) => {
             updateMat(e.currentTarget.__data__)

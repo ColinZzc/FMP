@@ -1,7 +1,9 @@
 import pandas as pd
+from flask import jsonify
 from sqlalchemy import create_engine
 import logging
 import math
+import json
 
 engine = create_engine('oracle+cx_oracle://colin:colin@localhost:1521/?service_name=airvispdb.mshome.net', echo=False)
 # engine = create_engine('oracle+cx_oracle://"zhichao.zhang":colin@10.7.2.138:1521/?service_name=orclpdb', echo=False)
@@ -226,6 +228,35 @@ def get_bucket_json(feature, year=2013):
     return df.to_json(orient='records')
 
 
+def AQI(data):
+    aqiTable = {
+        "iaqi": [0, 50, 100, 150, 200, 300, 400, 500],
+        "so2": [0, 50, 150, 475, 800, 1600, 2100, 2620],
+        "no2": [0, 40, 80, 180, 280, 565, 750, 940],
+        "pm10": [0, 50, 150, 250, 350, 420, 500, 600],
+        "co": [0, 2, 4, 14, 24, 36, 48, 60],
+        "o3": [0, 160, 200, 300, 400, 800, 1000, 1200],
+        "pm25": [0, 35, 75, 115, 150, 250, 350, 500]
+    }
+
+    iaqi = []
+    for k in data.keys():
+        level = 7
+        for value in aqiTable[k][::-1]:
+            if data[k]<value:
+                level-=1
+            else:
+                break
+        oneIaqi = (aqiTable['iaqi'][level+1] - aqiTable['iaqi'][level]) / \
+            (aqiTable[k][level+1] - aqiTable[k][level]) * \
+            (data[k]-aqiTable[k][level]) + aqiTable['iaqi'][level]
+
+        iaqi.append(oneIaqi)
+
+    return max(iaqi)
+
+
+
 # pollution 一年每月均值 for sra chart
 def get_avg_pollution_json(year=2013):
     # 优化速度，建了表 -> create table AVG2013 as
@@ -412,6 +443,11 @@ def get_avg_pollution_json(year=2013):
 
     sql = f'''select * from avg{year}'''
     df = pd.read_sql_query(sql, engine)
+
+    yearMean = df.describe().loc['mean']
+    yearAQI = AQI(yearMean)
+
+
     # normalize
     df['pm25'] = df['pm25'] / 42.2614
     df['pm10'] = df['pm10'] / 51.7446
@@ -421,4 +457,4 @@ def get_avg_pollution_json(year=2013):
     df['o3'] = df['o3'] / 90.7548
 
     logging.debug(f'''get avg pollution in {year}, total data {str(df.shape[0])} lines.''')
-    return df.to_json(orient='records')
+    return jsonify({"aqi": yearAQI, "data": df.to_json(orient='records')})
