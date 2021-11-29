@@ -81,7 +81,7 @@ let getSRAs = g => {
 //添加元素
 let backgroundAxis = document.createElement("div")
 backgroundAxis.className = "backgroundAxis"
-backgroundAxis.style = "width: 90vw; max-width: 2000px; min-width:1200px; max-height:450px"
+// backgroundAxis.style = "width: 90vw; max-width: 2000px; min-width:1200px; max-height:450px"
 backgroundAxis.appendChild(sraLine())
 sraArea.appendChild(backgroundAxis)
 
