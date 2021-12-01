@@ -66,7 +66,7 @@ let getSRAs = g => {
                     let aqi = d.aqi;
                     // console.log(aqi)
                     let data = JSON.parse(d.data);
-                    let sraR = 150
+                    let sraR = 140
                     let temp = sra(data, sraR, sraR)
                     currentDOM.appendChild(temp)
                     console.log("sra complete year of " + year)

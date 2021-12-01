@@ -3,9 +3,9 @@ import {windChart} from "./windChart.js";
 let singleLineChart = d3.select("#singleLineChart")
 let windContainer = d3.select("#windChart")
 
-export function showSelectedInfo(d3Selected) {
-    console.log("selected area: " + d3Selected.size())
-    let data = d3Selected.data()
+export function showSelectedInfo(data) {
+    // console.log("selected area: " + d3Selected.size())
+    // let data = d3Selected.data()
     let [min, max] = d3.extent(data, d => d.corrvalue)
     let range = (Math.abs(max) + Math.abs(min)) / 700
     let groupedData = d3.groups(data, d => Math.floor(d.corrvalue / range)); // JS 有-0 向下取整才不会碰到-0

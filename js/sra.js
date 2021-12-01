@@ -78,9 +78,10 @@ export function sra(data, wid=150, hei=150) {
         //  .scale(radius.copy().range([-innerRadius, -outerRadius]))
         //  .orient("left"))
         .append("text")
-        .attr("y", -outerRadius - 5) //-5 离最大值远一些
+        .attr("y", -outerRadius - 1) //-1 离最大值远一些
         // .attr("dy", ".91em")
         .attr("text-anchor", "middle")
+        .attr("font-size", 10)
         .text(function (d) {
             return formatDay(d);
         });
