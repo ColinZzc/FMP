@@ -150,7 +150,8 @@ export default class Map {
                     .attr("transform", "translate(" + (that._width - 170) + ",0)")
             }
 
-            this.renderElevationBar(data, svg.select(".elevationBar"))
+            // init in brush
+            // renderElevationBar(data, svg.select(".elevationBar"))
 
             // clean brash
             d3.select(".brush").call(that._brush.move, null);
@@ -243,208 +244,13 @@ export default class Map {
             .call(xAxis)
     }
 
-    async renderElevationBar(selectedData, container) {
-        let groupData = d3.groups(selectedData, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
-        let elevationData = []
-        for (const [elegroup, datum] of groupData) {
-            let newDatum = {}
-            newDatum.elegroup = elegroup
-            newDatum.avgcorr = d3.mean(datum, d => d.corrvalue)
-            newDatum.elecount = datum.length
-            // newDatum.data = datum
-            elevationData.push(newDatum)
-        }
-        elevationData.sort((a, b) => {
-            return b.elegroup - a.elegroup
-        }) //从高到低
-        // {elegroup: 40, avgcorr: -0.2750584225563381, data: Array(355)}
-
-        let data = elevationData
-
-        let width = 100
-        let height = 420
-        let paddingLeft = 50
-        let paddingRight = 40
-        let paddingTop = 30
-        let paddingButton = 50
-        let stroke_width = 1
-        let labelsize = 20
-        let numbersize = 20
-
-        let extent = d3.extent(data, d => d.avgcorr)
-        let minCorr = extent[0].toFixed(2)
-        let maxCorr = extent[1].toFixed(2)
-        let [minEle, maxEle] = d3.extent(data, d => d.elecount)
-        let areaPercent = (num) => {
-            return (num / 4224.9).toFixed(2) + "‰"
-        }
-        let widthScale = d3.scaleLinear()
-            .range([0, width])
-            // .domain([0, Math.abs(maxCorr) + Math.abs(minCorr)])
-            .domain([minEle - 100, maxEle]) //-5 高纬地区占比太小 看不出来
-
-        let yAxisshift = width + paddingLeft //widthScale(Math.abs(minCorr)) + paddingLeft
-
-        let positionScale = d3.scaleBand()
-            .range([0, height])
-            .domain(data.map(d => d.elegroup))
-            .padding(0.3)
-
-        let colorValueScale = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
-
-        if (container.select("svg").empty()) {
-            container.append('svg')
-                .attr("width", width + paddingLeft + paddingRight)
-                .attr("height", height + paddingButton + paddingTop)
-        }
-        container = container.select('svg')
-
-        let Yaxis = container.selectAll(".Yaxis")
-            .data([{"yAxisshift": yAxisshift}])
-        let newEnder = Yaxis.enter()
-            .append("line")
-        Yaxis.merge(newEnder)
-            .transition()
-            .duration(500)
-            .attr("class", "Yaxis")
-            .attr("stroke", "black")
-            .attr("stroke-width", stroke_width)
-            .attr("x1", d => d.yAxisshift)
-            .attr("x2", d => d.yAxisshift)
-            .attr("y1", paddingTop - 5)
-            .attr("y2", height + paddingTop + 5)
-        let Xaxis = container.selectAll(".Xaxis")
-            .data([["one x axis"]])
-        newEnder = Xaxis.enter()
-            .append("line")
-        Xaxis.merge(newEnder)
-            .attr("class", "Xaxis")
-            .attr("stroke", "black")
-            .attr("stroke-width", stroke_width)
-            .attr("x1", paddingLeft)
-            .attr("x2", width + paddingLeft)
-            .attr("y1", height + paddingTop + 5)
-            .attr("y2", height + paddingTop + 5)
-        let xLabel = container.selectAll(".xLabel")
-            .data([[""]])
-        newEnder = xLabel.enter()
-            .append("text")
-        xLabel.merge(newEnder)
-            .transition()
-            .duration(500)
-            .attr("class", "xLabel")
-            .attr("x", paddingLeft)
-            .attr("y", paddingTop - 10)
-            .attr("font-size", labelsize)
-        // .text("<--Correlation-->")
-        let yLabel = container.selectAll(".yLabel")
-            // .data([[""]])
-            .data([["8844m", 0], ["4000", (height + paddingTop) / 2], ["0", height + paddingTop - 15]])
-        newEnder = yLabel.enter()
-            .append("text")
-        yLabel.merge(newEnder)
-            .attr("class", "yLabel")
-            .attr("x", width + paddingLeft + 5)
-            // .attr("y", 150)
-            .attr("y", d => d[1])
-            .attr("transform", d => {
-                return `rotate(90 ${width + paddingLeft + 5},${d[1]})`
-            })
-            .attr("font-size", labelsize)
-            // .text("<--Elevation-->")
-            .text(d => d[0])
-        let xmin = container.selectAll(".xmin")
-            .data([[""]])
-        newEnder = xmin.enter()
-            .append("text")
-        xmin.merge(newEnder)
-            .attr("class", "xmin")
-            .attr("x", 25)
-            .attr("y", height + paddingTop + 5 + numbersize)
-            .attr("font-size", numbersize)
-            // .text("min")
-            .text("max")
-        let xminNum = container.selectAll(".xminNum")
-            // .data([[minCorr]])
-            .data([[areaPercent(maxEle)]])
-        newEnder = xminNum.enter()
-            .append("text")
-        xminNum.merge(newEnder)
-            .transition()
-            .duration(500)
-            .attr("class", "xminNum")
-            .attr("x", 25)
-            .attr("y", height + paddingTop + 5 + numbersize * 2)
-            .attr("font-size", numbersize)
-            .text(d => d)
-        // let xmax = container.selectAll(".xmax")
-        //     .data([[""]])
-        // newEnder = xmax.enter()
-        //     .append("text")
-        // xmax.merge(newEnder)
-        //     .attr("class", "xmax")
-        //     .attr("x", width + paddingLeft - 25)
-        //     .attr("y", height + paddingTop + 5 + numbersize)
-        //     .attr("font-size", numbersize)
-        //     // .text("max")
-        //     .text("min")
-        // let xmaxNum = container.selectAll(".xmaxNum")
-        //     // .data([[maxCorr]])
-        //     .data([[areaPercent(minEle)]])
-        // newEnder = xmaxNum.enter()
-        //     .append("text")
-        // xmaxNum.merge(newEnder)
-        //     .transition()
-        //     .duration(500)
-        //     .attr("class", "xmaxNum")
-        //     .attr("x", width + paddingLeft - 25)
-        //     .attr("y", height + paddingTop + 5 + numbersize * 2)
-        //     .attr("font-size", numbersize)
-        //     .text(d => d)
-
-        let join = container
-            .selectAll("rect")
-            .data(data)
-
-        newEnder = join.enter()
-            .append("rect")
-        join.merge(newEnder)
-            .transition()
-            .duration(500)
-            .attr("fill", d => {
-                return d3.interpolateRdBu(colorValueScale(d.avgcorr))
-            })
-            .attr("width", d => {
-                // return widthScale(Math.abs(d.avgcorr))
-                return widthScale(d.elecount)
-            })
-            .attr("height", positionScale.bandwidth())
-            .attr("y", d => positionScale(d.elegroup) + paddingTop)
-            .attr("x", d => {
-                let shiftRight = 1
-                // if (d.avgcorr < 0) {
-                //     //负数方y轴左边
-                //     shiftRight = shiftRight + widthScale(Math.abs(d.avgcorr))
-                //     return yAxisshift - shiftRight
-                // } else {
-                //     return yAxisshift + shiftRight
-                // }
-
-                //负数方y轴左边
-                shiftRight = shiftRight + widthScale(d.elecount)
-                return yAxisshift - shiftRight
-
-            })
-
-        return container
-    }
-
     onBrush({selection}) {
         let circles = d3.select(".points").selectAll("circle")
 
         if (selection == null) {
             if (!circles.empty()) {
                 circles.style("opacity", 1)
+                renderElevationBar(circles.data(), d3.select(".elevationBar"))
                 showSelectedInfo(circles.data())
             }
         } else {
@@ -459,8 +265,213 @@ export default class Map {
             selectedCircles.style("opacity", 1)
             console.log("selected area: " + selectedCircles.size())
             let selectedData = selectedCircles.data()
-            // this.renderElevationBar(selectedData)
+            // this is brush
+            renderElevationBar(selectedData, d3.select(".elevationBar"))
             showSelectedInfo(selectedData)
         }
     }
+}
+
+async function renderElevationBar(selectedData, container) {
+    let groupData = d3.groups(selectedData, d => d.elegroup) //按elegroup分了个类 [elegroup, Array(2008)] Array里是原始数据
+    let elevationData = []
+    for (const [elegroup, datum] of groupData) {
+        let newDatum = {}
+        newDatum.elegroup = elegroup
+        newDatum.avgcorr = d3.mean(datum, d => d.corrvalue)
+        newDatum.elecount = datum.length
+        // newDatum.data = datum
+        elevationData.push(newDatum)
+    }
+    elevationData.sort((a, b) => {
+        return b.elegroup - a.elegroup
+    }) //从高到低
+    // {elegroup: 40, avgcorr: -0.2750584225563381, data: Array(355)}
+
+    let data = elevationData
+
+    let width = 100
+    let height = 420
+    let paddingLeft = 50
+    let paddingRight = 40
+    let paddingTop = 30
+    let paddingButton = 50
+    let stroke_width = 1
+    let labelsize = 20
+    let numbersize = 20
+
+    let extent = d3.extent(data, d => d.avgcorr)
+    let minCorr = extent[0].toFixed(2)
+    let maxCorr = extent[1].toFixed(2)
+    let [minEle, maxEle] = d3.extent(data, d => d.elecount)
+    let areaPercent = (num) => {
+        return (num / 4224.9).toFixed(2) + "‰"
+    }
+    let widthScale = d3.scaleLinear()
+        .range([0, width])
+        // .domain([0, Math.abs(maxCorr) + Math.abs(minCorr)])
+        .domain([minEle - 100, maxEle]) //-5 高纬地区占比太小 看不出来
+
+    let yAxisshift = width + paddingLeft //widthScale(Math.abs(minCorr)) + paddingLeft
+
+    let positionScale = d3.scaleBand()
+        .range([0, height])
+        // .domain(data.map(d => d.elegroup)) //[-1:66] 除了64
+        .domain(d3.range(66, -2, -1))
+        .padding(0.3)
+
+    let colorValueScale = d3.scaleLinear().domain([-1, 1]).range([0, 1]);
+
+    if (container.select("svg").empty()) {
+        container.append('svg')
+            .attr("width", width + paddingLeft + paddingRight)
+            .attr("height", height + paddingButton + paddingTop)
+    }
+    container = container.select('svg')
+
+    let Yaxis = container.selectAll(".Yaxis")
+        .data([{"yAxisshift": yAxisshift}])
+    let newEnder = Yaxis.enter()
+        .append("line")
+    Yaxis.merge(newEnder)
+        .transition()
+        .duration(500)
+        .attr("class", "Yaxis")
+        .attr("stroke", "black")
+        .attr("stroke-width", stroke_width)
+        .attr("x1", d => d.yAxisshift)
+        .attr("x2", d => d.yAxisshift)
+        .attr("y1", paddingTop - 5)
+        .attr("y2", height + paddingTop + 5)
+    let Xaxis = container.selectAll(".Xaxis")
+        .data([["one x axis"]])
+    newEnder = Xaxis.enter()
+        .append("line")
+    Xaxis.merge(newEnder)
+        .attr("class", "Xaxis")
+        .attr("stroke", "black")
+        .attr("stroke-width", stroke_width)
+        .attr("x1", paddingLeft)
+        .attr("x2", width + paddingLeft)
+        .attr("y1", height + paddingTop + 5)
+        .attr("y2", height + paddingTop + 5)
+    let xLabel = container.selectAll(".xLabel")
+        .data([[""]])
+    newEnder = xLabel.enter()
+        .append("text")
+    xLabel.merge(newEnder)
+        .transition()
+        .duration(500)
+        .attr("class", "xLabel")
+        .attr("x", paddingLeft)
+        .attr("y", paddingTop - 10)
+        .attr("font-size", labelsize)
+    // .text("<--Correlation-->")
+    let yLabel = container.selectAll(".yLabel")
+        // .data([[""]])
+        .data([["8844 M", 0], ["4000", (height + paddingTop) / 2], ["0", height + paddingTop - 15]])
+    newEnder = yLabel.enter()
+        .append("text")
+    yLabel.merge(newEnder)
+        .attr("class", "yLabel")
+        .attr("x", width + paddingLeft + 5)
+        // .attr("y", 150)
+        .attr("y", d => d[1])
+        .attr("transform", d => {
+            return `rotate(90 ${width + paddingLeft + 5},${d[1]})`
+        })
+        .attr("font-size", labelsize)
+        // .text("<--Elevation-->")
+        .text(d => d[0])
+    let xmin = container.selectAll(".xmin")
+        .data([[""]])
+    xmin.exit().remove()
+    newEnder = xmin.enter()
+        .append("text")
+    xmin.merge(newEnder)
+        .attr("class", "xmin")
+        .attr("x", 25)
+        .attr("y", height + paddingTop + 5 + numbersize)
+        .attr("font-size", numbersize)
+        // .text("min")
+        .text("max")
+    let xminNum = container.selectAll(".xminNum")
+        // .data([[minCorr]])
+        .data([[areaPercent(maxEle)]])
+    xminNum.exit().remove()
+
+    newEnder = xminNum.enter()
+        .append("text")
+    xminNum.merge(newEnder)
+        .transition()
+        .duration(500)
+        .attr("class", "xminNum")
+        .attr("x", 25)
+        .attr("y", height + paddingTop + 5 + numbersize * 2)
+        .attr("font-size", numbersize)
+        .text(d => d)
+    // let xmax = container.selectAll(".xmax")
+    //     .data([[""]])
+    // xmax.exit().remove()
+    // newEnder = xmax.enter()
+    //     .append("text")
+    // xmax.merge(newEnder)
+    //     .attr("class", "xmax")
+    //     .attr("x", width + paddingLeft - 25)
+    //     .attr("y", height + paddingTop + 5 + numbersize)
+    //     .attr("font-size", numbersize)
+    //     // .text("max")
+    //     .text("min")
+    // let xmaxNum = container.selectAll(".xmaxNum")
+    //     // .data([[maxCorr]])
+    //     .data([[areaPercent(minEle)]])
+    // xmaxNum.exit().remove()
+    // newEnder = xmaxNum.enter()
+    //     .append("text")
+    // xmaxNum.merge(newEnder)
+    //     .transition()
+    //     .duration(500)
+    //     .attr("class", "xmaxNum")
+    //     .attr("x", width + paddingLeft - 25)
+    //     .attr("y", height + paddingTop + 5 + numbersize * 2)
+    //     .attr("font-size", numbersize)
+    //     .text(d => d)
+
+    let join = container
+        .selectAll("rect")
+        .data(data)
+
+    join.exit().remove()
+
+    newEnder = join.enter()
+        .append("rect")
+    join.merge(newEnder)
+        .transition()
+        .duration(500)
+        .attr("fill", d => {
+            return d3.interpolateRdBu(colorValueScale(d.avgcorr))
+        })
+        .attr("width", d => {
+            // return widthScale(Math.abs(d.avgcorr))
+            return widthScale(d.elecount)
+        })
+        .attr("height", positionScale.bandwidth())
+        .attr("y", d => positionScale(d.elegroup) + paddingTop)
+        .attr("x", d => {
+            let shiftRight = 1
+            // if (d.avgcorr < 0) {
+            //     //负数方y轴左边
+            //     shiftRight = shiftRight + widthScale(Math.abs(d.avgcorr))
+            //     return yAxisshift - shiftRight
+            // } else {
+            //     return yAxisshift + shiftRight
+            // }
+
+            //负数方y轴左边
+            shiftRight = shiftRight + widthScale(d.elecount)
+            return yAxisshift - shiftRight
+
+        })
+
+    return container
 }
