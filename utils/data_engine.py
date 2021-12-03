@@ -4,6 +4,8 @@ from sqlalchemy import create_engine
 import logging
 import math
 import json
+from sklearn.neighbors import KernelDensity
+import numpy as np
 
 engine = create_engine('oracle+cx_oracle://colin:colin@localhost:1521/?service_name=airvispdb.mshome.net', echo=False)
 # engine = create_engine('oracle+cx_oracle://"zhichao.zhang":colin@10.7.2.138:1521/?service_name=orclpdb', echo=False)
@@ -26,7 +28,7 @@ def get_corrcoef_json(year, month, met_pol):
     YearMonth = str(year) + '%02d' % int(month)
     pollution = met_pol.split("_")[-1]
     sql = ""
-    if "wind" in met_pol: # TODO：暂未使用，与else sql合并
+    if "wind" in met_pol:  # TODO：暂未使用，与else sql合并
         sql = f'''
                 SELECT LAT, LON,
                 addxyvector(U_{pollution}, V_{pollution}) {met_pol}
@@ -41,7 +43,7 @@ def get_corrcoef_json(year, month, met_pol):
             '''
     df = pd.read_sql_query(sql, engine)
     # 坐标转换
-    for i in df.index: #操作耗时
+    for i in df.index:  # 操作耗时
         u = df.loc[i, 'u']
         v = df.loc[i, 'v']
         x, y, _ = transform(v, u)
@@ -243,18 +245,33 @@ def AQI(data):
     for k in data.keys():
         level = 7
         for value in aqiTable[k][::-1]:
-            if data[k]<value:
-                level-=1
+            if data[k] < value:
+                level -= 1
             else:
                 break
-        oneIaqi = (aqiTable['iaqi'][level+1] - aqiTable['iaqi'][level]) / \
-            (aqiTable[k][level+1] - aqiTable[k][level]) * \
-            (data[k]-aqiTable[k][level]) + aqiTable['iaqi'][level]
+        oneIaqi = (aqiTable['iaqi'][level + 1] - aqiTable['iaqi'][level]) / \
+                  (aqiTable[k][level + 1] - aqiTable[k][level]) * \
+                  (data[k] - aqiTable[k][level]) + aqiTable['iaqi'][level]
 
         iaqi.append(oneIaqi)
 
     return max(iaqi)
 
+
+# 相关性数据桶 某年每个月数据分布在不同相关性区间的数量
+def get_kde_json(feature, year=2013, kernel="epanechnikov", bandwidth=1):
+    sql = f'''select {feature} from {"corrcoef" + str(year)}'''
+    X_plot = np.linspace(-1.5, 1.5, 100)[:, None]
+    df = pd.DataFrame()
+    for month in range(1, 13):
+        s = sql + f'''{month:02d}'''
+        data = pd.read_sql_query(s, engine)
+        log_dens = KernelDensity(kernel=kernel, bandwidth=bandwidth).fit(data[feature].values.reshape(-1, 1)).score_samples(X_plot)
+        df[month] = np.exp(log_dens)
+
+    # df['bucketid'] = df['bucketid'].astype('str')
+    logging.debug(f'''get {feature} kde in {year}, total reduced data {str(df.shape[0])} lines.''')
+    return df.T.to_json(orient='values')
 
 
 # pollution 一年每月均值 for sra chart
@@ -446,7 +463,6 @@ def get_avg_pollution_json(year=2013):
 
     yearMean = df.describe().loc['mean']
     yearAQI = AQI(yearMean)
-
 
     # normalize
     df['pm25'] = df['pm25'] / 42.2614

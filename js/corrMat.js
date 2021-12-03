@@ -49,27 +49,35 @@ for (const meteorologyKey of meteorology) {
 }
 
 export function corrMat(div, met_pol) {
-    if ("wind" === met_pol.slice(0, 4)) {
-        airDB.get_bucket_by_feature_year(met_pol)
-            .then(data => {
-                if (data) {
-                    let wc = windChart(data, met_pol)
-                    div.appendChild(wc)
-                    console.log(met_pol + " complete")
-                }
-            })
-    } else {
-        airDB.get_bucket_by_feature_year(met_pol)
-            .then(data => {
-                if (data) {
-                    let lc = MultiLineChart(data, {
-                        chartID: met_pol,
-                    })
-                    div.appendChild(lc)
-                    // console.log(met_pol + " complete")
-                }
-            })
-    }
+    // if ("wind" === met_pol.slice(0, 4)) {
+    //     airDB.get_bucket_by_feature_year(met_pol)
+    //         .then(data => {
+    //             if (data) {
+    //                 let wc = windChart(data, met_pol)
+    //                 div.appendChild(wc)
+    //                 console.log(met_pol + " complete")
+    //             }
+    //         })
+    // } else {
+    //     airDB.get_bucket_by_feature_year(met_pol)
+    //         .then(data => {
+    //             if (data) {
+    //                 let lc = MultiLineChart(data, {
+    //                     chartID: met_pol,
+    //                 })
+    //                 div.appendChild(lc)
+    //                 // console.log(met_pol + " complete")
+    //             }
+    //         })
+    // }
+
+    //kde ridgeLine
+    airDB.get_kde_by_feature_year(met_pol)
+        .then(data=>{
+            if (data) {
+
+            }
+        })
 }
 
 export function updateMat(year) {
@@ -100,6 +108,8 @@ export function updateMat(year) {
         }
     }
 }
+
+
 
 //season legend
 let mouseover = function (d) {

@@ -86,4 +86,33 @@ export default class DB {
         })
     }
 
+    async get_kde_by_feature_year(feature, year = 2013) {
+        let key = "kde_" + feature + "_" + year
+        if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
+            this._loadingList.add(key)
+            this._cache[key] = await this.get_kde_from_server(feature, year)
+            this._loadingList.delete(key)
+        }
+        return this._cache[key] ?? null;
+    }
+
+    get_kde_from_server(feature, year = 2013) {
+        return new Promise(resolve => {
+            // console.log("request " + feature + " " + year + " from server")
+            let url = "http://127.0.0.1:5000/kde" + "?feature=" + feature + "&year=" + year
+                +"&kernel=epanechnikov&bandwidth=5"
+                // +"&kernel=gaussian&bandwidth=1"
+            if (d3.version.slice(0, 1) == '6') {
+                d3.json(url).then((data) => {
+                    resolve(data)
+                })
+            } else {
+                d3.json(url, (data) => {
+                    resolve(data)
+                })
+            }
+
+        })
+    }
+
 }
