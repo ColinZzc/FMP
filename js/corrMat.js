@@ -133,8 +133,8 @@ let mouseover = function (d) {
 
 
     let myCurves = d3.selectAll(".myCurves")
-    myCurves.selectAll(".line").attr("opacity", 0.1);
-    myCurves.selectAll("." + id).attr("opacity", 1);
+    myCurves.attr("opacity", 0.1);
+    d3.selectAll("." + id).attr("opacity", 1);
 
 };
 let mouseleave = function (d) {
