@@ -8,35 +8,34 @@ let meteorology = ["temp", "rh", "psfc"] //, "wind"]
 let pollution = ["pm25", "pm10", "so2", "no2", "co", "o3"]
 
 //标题行
-let row = document.createElement("div")
-row.style.display = "grid"
-row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
-matArea.appendChild(row)
+// let row = document.createElement("div")
+// row.style.display = "grid"
+// row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
+// matArea.appendChild(row)
 //标题行左上角空白位
-let blank = document.createElement("div")
-row.appendChild(blank)
+// let blank = document.createElement("div")
+// row.appendChild(blank)
 //添加标题行各项
-for (const pollutionkey of pollution) {
-    let icon = document.createElement("text")
-    icon.className = "button"
-    icon.textContent = pollutionkey
-    row.appendChild(icon)
-}
+// for (const pollutionkey of pollution) {
+    // let icon = document.createElement("text")
+    // icon.className = "button"
+    // icon.textContent = pollutionkey
+// }
 
 for (const meteorologyKey of meteorology) {
     //一行
     let row = document.createElement("div")
     row.style.display = "grid"
-    row.style['grid-template-columns'] = "40px auto auto auto auto auto auto"
+    row.style['grid-template-columns'] = "auto auto auto auto auto auto"
     matArea.appendChild(row)
     //标签元素
-    let icon = document.createElement("text")
-    icon.className = "button"
-    row.appendChild(icon)
+    // let icon = document.createElement("text")
+    // icon.className = "button"
+    // row.appendChild(icon)
 
     for (const pollutionKey of pollution) {
         //第一格标签
-        if (icon.textContent === "") icon.textContent = meteorologyKey;
+        // if (icon.textContent === "") icon.textContent = meteorologyKey;
 
         let met_pol = meteorologyKey + "_" + pollutionKey
         let box = document.createElement("div")
@@ -74,9 +73,9 @@ export function corrMat(div, met_pol) {
 
     //kde ridgeLine
     airDB.get_kde_by_feature_year(met_pol)
-        .then(([year,data]) => {
+        .then(([year, data]) => {
             if (data) {
-                let con = d3.select("#"+met_pol)
+                let con = d3.select("#" + met_pol)
                 kde(data, year, met_pol, con)
             }
         })
@@ -110,12 +109,12 @@ export function updateMat(year) {
         // }
 
         airDB.get_kde_by_feature_year(met_pol, year)
-        .then(([year, data]) => {
-            if (data) {
-                let con = d3.select("#"+met_pol)
-                kde(data, year,met_pol, con)
-            }
-        })
+            .then(([year, data]) => {
+                if (data) {
+                    let con = d3.select("#" + met_pol)
+                    kde(data, year, met_pol, con)
+                }
+            })
     }
 }
 

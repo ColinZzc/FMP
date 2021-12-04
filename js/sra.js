@@ -24,7 +24,7 @@ export function sra(data, wid=150, hei=150) {
             "#8db9d8",
         ]);
     let stack = d3.stack()
-        .keys(['pm25', 'pm10', 'so2', 'pm25', 'no2', 'o3'])
+        .keys(['pm25', 'pm10', 'so2', 'no2', 'co', 'o3'])
 
     let area = d3.areaRadial()
         // .interpolate("cardinal-closed")
