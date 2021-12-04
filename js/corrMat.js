@@ -1,6 +1,7 @@
 import {MultiLineChart} from "./MultLineChart.js";
 import {windChart} from "./windChart.js";
 import {showOnMap} from "./chineseMap.js";
+import {kde} from "./ridgeLine.js";
 
 let matArea = document.getElementById("corrMat")
 let meteorology = ["temp", "rh", "psfc"] //, "wind"]
@@ -73,9 +74,10 @@ export function corrMat(div, met_pol) {
 
     //kde ridgeLine
     airDB.get_kde_by_feature_year(met_pol)
-        .then(data=>{
+        .then(([year,data]) => {
             if (data) {
-
+                let con = d3.select("#"+met_pol)
+                kde(data, year, met_pol, con)
             }
         })
 }
@@ -86,46 +88,61 @@ export function updateMat(year) {
     let matList = document.getElementsByClassName("matBox")
     for (const matListElement of matList) {
         let met_pol = matListElement.id
-        if ("wind" === met_pol.slice(0, 4)) {
-            airDB.get_bucket_by_feature_year(met_pol, year)
-                .then(data => {
-                    if (data) {
-                        windChart(data, met_pol, d3.select("#" + met_pol).select("svg"))
-                        console.log(met_pol + " update complete")
-                    }
-                })
-        } else {
-            airDB.get_bucket_by_feature_year(met_pol, year)
-                .then(data => {
-                    if (data) {
-                        MultiLineChart(data, {
-                            chartID: met_pol,
-                            svg: d3.select("#" + met_pol).select("svg")
-                        })
-                        console.log(met_pol + " update complete")
-                    }
-                })
-        }
+        // if ("wind" === met_pol.slice(0, 4)) {
+        //     airDB.get_bucket_by_feature_year(met_pol, year)
+        //         .then(data => {
+        //             if (data) {
+        //                 windChart(data, met_pol, d3.select("#" + met_pol).select("svg"))
+        //                 console.log(met_pol + " update complete")
+        //             }
+        //         })
+        // } else {
+        //     airDB.get_bucket_by_feature_year(met_pol, year)
+        //         .then(data => {
+        //             if (data) {
+        //                 MultiLineChart(data, {
+        //                     chartID: met_pol,
+        //                     svg: d3.select("#" + met_pol).select("svg")
+        //                 })
+        //                 console.log(met_pol + " update complete")
+        //             }
+        //         })
+        // }
+
+        airDB.get_kde_by_feature_year(met_pol, year)
+        .then(([year, data]) => {
+            if (data) {
+                let con = d3.select("#"+met_pol)
+                kde(data, year,met_pol, con)
+            }
+        })
     }
 }
 
 
-
 //season legend
 let mouseover = function (d) {
-    let id = d3.select(this).attr("id")
+    let id = d3.select(this).attr("id") //season: spring winter ...
     let lines = d3.selectAll(".lines")
     lines.selectAll(".line").style("opacity", 0.1);
     lines.selectAll("." + id).style("opacity", 1);
 
-    let points = d3.selectAll(".windPoints")
-    points.selectAll(".windPoint").style("display", "none");
-    points.selectAll("." + id).style("display", "inline")
+    // let points = d3.selectAll(".windPoints")
+    // points.selectAll(".windPoint").style("display", "none");
+    // points.selectAll("." + id).style("display", "inline")
+
+
+    let myCurves = d3.selectAll(".myCurves")
+    myCurves.selectAll(".line").attr("opacity", 0.1);
+    myCurves.selectAll("." + id).attr("opacity", 1);
 
 };
 let mouseleave = function (d) {
     d3.selectAll(".line").style("opacity", 1);
-    d3.selectAll(".windPoint").style("display", "inline");
+    // d3.selectAll(".windPoint").style("display", "inline");
+
+    d3.selectAll(".myCurves").attr("opacity", 0.9);
+
 
 };
 d3.selectAll("#spring")

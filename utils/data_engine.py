@@ -259,9 +259,9 @@ def AQI(data):
 
 
 # 相关性数据桶 某年每个月数据分布在不同相关性区间的数量
-def get_kde_json(feature, year=2013, kernel="epanechnikov", bandwidth=1):
+def get_kde_json(feature, year=2013, kernel="epanechnikov", bandwidth=0.1):
     sql = f'''select {feature} from {"corrcoef" + str(year)}'''
-    X_plot = np.linspace(-1.5, 1.5, 100)[:, None]
+    X_plot = np.linspace(-1, 1, 100)[:, None]
     df = pd.DataFrame()
     for month in range(1, 13):
         s = sql + f'''{month:02d}'''

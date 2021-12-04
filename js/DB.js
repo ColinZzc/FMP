@@ -100,15 +100,15 @@ export default class DB {
         return new Promise(resolve => {
             // console.log("request " + feature + " " + year + " from server")
             let url = "http://127.0.0.1:5000/kde" + "?feature=" + feature + "&year=" + year
-                +"&kernel=epanechnikov&bandwidth=5"
+                +"&kernel=epanechnikov&bandwidth=0.1"
                 // +"&kernel=gaussian&bandwidth=1"
             if (d3.version.slice(0, 1) == '6') {
                 d3.json(url).then((data) => {
-                    resolve(data)
+                    resolve([year, data])
                 })
             } else {
                 d3.json(url, (data) => {
-                    resolve(data)
+                    resolve([year, data])
                 })
             }
 
