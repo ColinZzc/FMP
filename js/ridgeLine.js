@@ -10,7 +10,7 @@ export function kde(data, year, met_pol, container) {
     const n = categories.length
 
     const season = d3.scaleOrdinal()
-        .domain(["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01"])
+        .domain([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0])
         .range(["spring", "spring", "spring",
             "summer", "summer", "summer",
             "autumn", "autumn", "autumn",
@@ -115,7 +115,7 @@ export function kde(data, year, met_pol, container) {
         .join("path")
         .attr("class", (d, i) => {
 
-            return "myCurves " + (i + 1) + " " + season(i + 1)
+            return "myCurves " + (i + 1) + " " + season(i)
         })
         .attr("transform", function (d, i) {
             return (`translate(0, ${(yName(categories[i]) - height)})`)
