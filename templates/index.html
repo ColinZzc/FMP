@@ -10,9 +10,9 @@
           integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="../resource/buttons.css">
     <style>
-        html {
+        html body {
             font: 15px sans-serif;
-            color: #444444;
+            background-color: #e0e0e0;
         }
 
         div, button {
@@ -72,22 +72,28 @@
         /*input[id="temp"]:hover + svg,*/
         /*input[id="temp"]:focus + svg,*/
         input[id="temp"]:checked + svg {
-            fill: #8db9d8;
+            fill: #ffffff;
+            stroke: #f6f6f6;
+            stroke-width: 20px;
+            /*box-shadow: 0 0 20px rgba(34, 34, 34, 0.8);*/
         }
 
         /*input[id="rh"]:hover + svg,*/
         /*input[id="rh"]:focus + svg,*/
         input[id="rh"]:checked + svg {
-            fill: #8db9d8;
-            animation-duration: 3s;
-            animation-iteration-count: initial;
-            animation-name: glowing-black-half;
+            /*fill: #3e0014;*/
+            stroke: #6a6a6a;
+            stroke-width: 40px;
+            /*box-shadow: 0 0 20px rgba(34, 34, 34, 0.8);*/
         }
 
         /*input[id="psfc"]:hover + svg,*/
         /*input[id="psfc"]:focus + svg,*/
         input[id="psfc"]:checked + svg {
-            fill: #8db9d8;
+            /*fill: #3e0014;*/
+            stroke: #6a6a6a;
+            stroke-width: 40px;
+            /*box-shadow: 0 0 20px rgba(34, 34, 34, 0.8);*/
         }
 
 
@@ -225,7 +231,7 @@
             </div>
             <div style="display: grid; grid-template-columns: auto 40px">
                 <div id="corrMat"></div>
-                <div>
+                <div style="display: grid; grid-template-rows: auto auto auto; align-items: center">
                     <label for="temp">
                         <input type="radio" name="metLabel" id="temp" class="metLabel"/>
                         <svg t="1638632041750" class="icon" viewBox="0 0 1024 1024" version="1.1"
