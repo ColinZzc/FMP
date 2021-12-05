@@ -48,8 +48,8 @@ def kde():
     feature = request.args.get("feature")
     year = request.args.get("year", default=2013)
     kernel = request.args.get("kernel", default="epanechnikov")
-    bandwidth = request.args.get("bandwidth", default=1)
-    return get_kde_json(feature, year, kernel="epanechnikov", bandwidth=1)
+    bandwidth = request.args.get("bandwidth", default=0.1)
+    return get_kde_json(feature, year, kernel="epanechnikov", bandwidth=0.1)
 
 
 global engine

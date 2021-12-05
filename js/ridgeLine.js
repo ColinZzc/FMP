@@ -41,7 +41,8 @@ export function kde(data, year, met_pol, container) {
         .paddingInner(1)
 
     let dataIndex2width = (i) => {
-        return (i - 50) * 0.02
+        // 200个点映射到[-1,1]
+        return (i - 100) / 100
     }
 
     let colorValueScale = d3.scaleLinear().domain([-1, 1]).range([0, 1]);

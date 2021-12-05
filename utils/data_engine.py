@@ -266,7 +266,7 @@ def get_kde_json(feature, year=2013, kernel="epanechnikov", bandwidth=0.1):
     # 表不存在
     if res['hastable'][0] == 0:
         sql = f'''select {feature} from {"corrcoef" + str(year)}'''
-        X_plot = np.linspace(-1, 1, 100)[:, None]
+        X_plot = np.linspace(-1, 1, 200)[:, None]
         df = pd.DataFrame()
         for month in range(1, 13):
             s = sql + f'''{month:02d}'''

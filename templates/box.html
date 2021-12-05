@@ -47,7 +47,7 @@
         import {kde} from "../js/ridgeLine.js";
 
         window.airDB = new DB()
-        airDB.get_kde_by_feature_year("temp_no2")
+        airDB.get_kde_by_feature_year("temp_no2", 2014)
         .then(([year,data]) => {
             let con = d3.select("#my_dataviz")
             kde(data, year, "temp_no2", con)
