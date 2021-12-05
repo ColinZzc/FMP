@@ -1,8 +1,8 @@
 import {const_value} from "./const.js";
 
 export function windChart(data, met_pol, container) {
-    let width = 250;
-    let height = 250;
+    let width = 400;
+    let height = 400;
     let padding = 20
     let svg
     if (typeof (container) == 'undefined') {

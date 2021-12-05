@@ -1,6 +1,6 @@
 import {MultiLineChart} from "./MultLineChart.js";
 import {windChart} from "./windChart.js";
-import {showOnMap} from "./chineseMap.js";
+import {showOnMap, updateTime} from "./chineseMap.js";
 import {kde} from "./ridgeLine.js";
 
 let matArea = document.getElementById("corrMat")
@@ -83,6 +83,9 @@ export function corrMat(div, met_pol) {
 
 export function updateMat(year) {
     console.log("start update corrMat to year " + year + " ...")
+    Window.currentInfo.year = year
+    updateTime()
+
     // let matList = d3.selectAll(".matBox")
     let matList = document.getElementsByClassName("matBox")
     for (const matListElement of matList) {

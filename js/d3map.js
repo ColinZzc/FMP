@@ -70,6 +70,8 @@
 
 import {rampX} from "./utils.js";
 import {showSelectedInfo} from "./selectedAreaCharts.js";
+import {monthStr} from "./const.js";
+import {updateTime} from "./chineseMap.js";
 
 export default class Map {
     constructor(svg) {
@@ -80,7 +82,7 @@ export default class Map {
         this._svg = svg;
         this._mapArea = null;
         this._brush = d3.brush()
-        this._title = null
+        // this._title = null
     }
 
     initMap() {
@@ -113,11 +115,11 @@ export default class Map {
             that._brush.on("end", this.onBrush)
         }
 
-        that._title = mapArea.append("text")
-            .attr("class", "mapTitle")
-            .text("title")
-            .attr("font-size", 30)
-            .attr("transform", `translate(${200},${50})`)
+        // that._title = mapArea.append("text")
+        //     .attr("class", "mapTitle")
+        //     .text("title")
+        //     .attr("font-size", 30)
+        //     .attr("transform", `translate(${200},${50})`)
 
         //解析地理位置json.map
         d3.json(L_json).then(function (json) {
@@ -157,8 +159,12 @@ export default class Map {
             d3.select(".brush").call(that._brush.move, null);
 
             //map title
-            that._title.text("" + year + "-" + month + " " + met_pol)
-            Window.currentInfo = {"year": year, "month": month, "met_pol": met_pol}
+            // that._title.text("" + monthStr[month] + " " + met_pol)
+            // Window.currentInfo = {"year": year, "month": month, "met_pol": met_pol}
+            Window.currentInfo.year = year
+            Window.currentInfo.month = month
+            Window.currentInfo.met_pol = met_pol
+            updateTime()
         }
 
         let linear = d3.scaleLinear().domain([-1, 1]).range([0, 1]);

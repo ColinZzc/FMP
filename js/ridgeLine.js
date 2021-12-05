@@ -97,6 +97,9 @@ export function kde(data, year, met_pol, container) {
                 d3.interpolateRdBu(i / (nbColor - 1))
             );
     }
+    //更新年份
+    container.select("svg").attr("class", year + " " + met_pol)
+
 
 
     // Compute kernel density estimation for each column:
