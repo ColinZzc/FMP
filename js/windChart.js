@@ -37,7 +37,7 @@ export function windChart(data, met_pol, container) {
             .append("circle")
             .attr("r", d => d)
             .attr("class", "backgroundCircle")
-            .style("stroke", "#ccc")
+            .style("stroke", "#878787")
             .style("stroke-dasharray", "3,3")
             .style("opacity", 0.5)
             .style("fill", "none");
