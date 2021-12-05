@@ -260,18 +260,33 @@ def AQI(data):
 
 # 相关性数据桶 某年每个月数据分布在不同相关性区间的数量
 def get_kde_json(feature, year=2013, kernel="epanechnikov", bandwidth=0.1):
-    sql = f'''select {feature} from {"corrcoef" + str(year)}'''
-    X_plot = np.linspace(-1, 1, 100)[:, None]
-    df = pd.DataFrame()
-    for month in range(1, 13):
-        s = sql + f'''{month:02d}'''
-        data = pd.read_sql_query(s, engine)
-        log_dens = KernelDensity(kernel=kernel, bandwidth=bandwidth).fit(data[feature].values.reshape(-1, 1)).score_samples(X_plot)
-        df[month] = np.exp(log_dens)
+    tableName = f'kde{year}{feature}'
+    checksql = f"select count(*) hasTable from user_tab_comments where table_name = '{tableName.upper()}'"
+    res = pd.read_sql_query(checksql, engine)
+    # 表不存在
+    if res['hastable'][0] == 0:
+        sql = f'''select {feature} from {"corrcoef" + str(year)}'''
+        X_plot = np.linspace(-1, 1, 100)[:, None]
+        df = pd.DataFrame()
+        for month in range(1, 13):
+            s = sql + f'''{month:02d}'''
+            data = pd.read_sql_query(s, engine)
+            log_dens = KernelDensity(kernel=kernel, bandwidth=bandwidth).fit(
+                data[feature].values.reshape(-1, 1)).score_samples(X_plot)
+            df[month] = np.exp(log_dens)
 
-    # df['bucketid'] = df['bucketid'].astype('str')
-    logging.debug(f'''get {feature} kde in {year}, total reduced data {str(df.shape[0])} lines.''')
-    return df.T.to_json(orient='values')
+        # 存一份计算结果
+        df.to_sql(tableName, engine, index=True)  # sql表无序 要加index
+
+        logging.debug(f'''calculate {feature} kde in {year}, total reduced data {str(df.shape[0])} lines.''')
+        return df.T.to_json(orient='values')
+    # 表存在
+    else:
+        sql = f'''SELECT "index", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" 
+        FROM {tableName} order by "index"'''
+        df = pd.read_sql_query(sql, engine)
+        logging.debug(f'''get {feature} kde in {year}, total reduced data {str(df.shape[0])} lines.''')
+        return df.drop(columns=['index']).T.to_json(orient='values')
 
 
 # pollution 一年每月均值 for sra chart
