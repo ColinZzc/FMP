@@ -86,14 +86,21 @@ export default class DB {
         })
     }
 
-    async get_kde_by_feature_year(feature, year = 2013) {
-        let key = "kde_" + feature + "_" + year
-        if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
-            this._loadingList.add(key)
-            this._cache[key] = await this.get_kde_from_server(feature, year)
-            this._loadingList.delete(key)
+    async get_kde_by_feature_year(feature, year = 2013, selectedArea) {
+        if (selectedArea == null) {
+            let key = "kde_" + feature + "_" + year
+            if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
+                this._loadingList.add(key)
+                this._cache[key] = await this.get_kde_from_server(feature, year)
+                this._loadingList.delete(key)
+            }
+            return this._cache[key] ?? null;
+        } else {
+            // 地图筛选区域 实时计算更新
+            let selectedKDE = await this.get_selectedArea_kde_by_feature_year(feature, year, selectedArea)
+            return selectedKDE
         }
-        return this._cache[key] ?? null;
+
     }
 
     get_kde_from_server(feature, year = 2013) {
@@ -111,6 +118,17 @@ export default class DB {
                     resolve([year, data])
                 })
             }
+
+        })
+    }
+
+    get_selectedArea_kde_by_feature_year(feature, year, selectedArea) {
+        return new Promise(resolve => {
+            // console.log("request " + feature + " " + year + " from server")
+            let url = "http://127.0.0.1:5000/kde" + "?feature=" + feature + "&year=" + year
+                + "&kernel=epanechnikov&bandwidth=0.1"
+            // +"&kernel=gaussian&bandwidth=1"
+            //TODO selectedArea to server
 
         })
     }

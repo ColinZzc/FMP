@@ -43,6 +43,9 @@ export function showSelectedInfo(data) {
     } else {
         windChart(filteredData, met_pol, windContainer.select("svg"))
     }
+
+    // TODO: update corrMat data里有啥 传经纬度吧
+    updateMat(window.currentInfo.year, data)
 }
 
 function LineChart(data, {

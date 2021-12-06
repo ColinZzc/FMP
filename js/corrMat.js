@@ -81,7 +81,7 @@ export function corrMat(div, met_pol) {
         })
 }
 
-export function updateMat(year) {
+export function updateMat(year, selectedArea) {
     console.log("start update corrMat to year " + year + " ...")
     Window.currentInfo.year = year
     updateTime()
@@ -111,7 +111,7 @@ export function updateMat(year) {
         //         })
         // }
 
-        airDB.get_kde_by_feature_year(met_pol, year)
+        airDB.get_kde_by_feature_year(met_pol, year, selectedArea)
             .then(([year, data]) => {
                 if (data) {
                     let con = d3.select("#" + met_pol)
