@@ -24,7 +24,7 @@ export function kde(data, year, met_pol, container) {
     // Add X axis
     const x = d3.scaleLinear()
         .domain([-1, 1])
-        .range([0, 50]);
+        .range([0, width]);
     let xAxis = container.select('xAxis')
 
 
@@ -65,7 +65,7 @@ export function kde(data, year, met_pol, container) {
         xAxis = svg.append("g")
             .attr("class", "xAxis")
             .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x).tickValues([-1, -1, 0, 1, 1]).tickSize(-height))
+            .call(d3.axisBottom(x).tickValues([-1, 0, 1]).tickSize(-height))
 
         // Add X axis label:
         svg.append("text")
