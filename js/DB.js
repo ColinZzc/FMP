@@ -5,7 +5,7 @@ export default class DB {
     }
 
     async get_corr_by_date(year = 2013, month = 1, met_pol) {
-        let key = "corr_" + year +" "+ month +" "+ met_pol
+        let key = "corr_" + year + " " + month + " " + met_pol
         if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
             console.log("server")
             this._loadingList.add(key)
@@ -86,8 +86,8 @@ export default class DB {
         })
     }
 
-    async get_kde_by_feature_year(feature, year = 2013, selectedArea) {
-        if (selectedArea == null) {
+    async get_kde_by_feature_year(feature, year = 2013, selectedCoorRange) {
+        if (selectedCoorRange == null) {
             let key = "kde_" + feature + "_" + year
             if (!this._cache.hasOwnProperty(key) && !this._loadingList.has(key)) {
                 this._loadingList.add(key)
@@ -97,7 +97,7 @@ export default class DB {
             return this._cache[key] ?? null;
         } else {
             // 地图筛选区域 实时计算更新
-            let selectedKDE = await this.get_selectedArea_kde_by_feature_year(feature, year, selectedArea)
+            let selectedKDE = await this.get_selectedArea_kde_by_feature_year(feature, year, selectedCoorRange)
             return selectedKDE
         }
 
@@ -107,8 +107,8 @@ export default class DB {
         return new Promise(resolve => {
             // console.log("request " + feature + " " + year + " from server")
             let url = "http://127.0.0.1:5000/kde" + "?feature=" + feature + "&year=" + year
-                +"&kernel=epanechnikov&bandwidth=0.1"
-                // +"&kernel=gaussian&bandwidth=1"
+                + "&kernel=epanechnikov&bandwidth=0.1"
+            // +"&kernel=gaussian&bandwidth=1"
             if (d3.version.slice(0, 1) == '6') {
                 d3.json(url).then((data) => {
                     resolve([year, data])
@@ -122,13 +122,26 @@ export default class DB {
         })
     }
 
-    get_selectedArea_kde_by_feature_year(feature, year, selectedArea) {
+    get_selectedArea_kde_by_feature_year(feature, year, selectedCoorRange) {
         return new Promise(resolve => {
             // console.log("request " + feature + " " + year + " from server")
             let url = "http://127.0.0.1:5000/kde" + "?feature=" + feature + "&year=" + year
                 + "&kernel=epanechnikov&bandwidth=0.1"
             // +"&kernel=gaussian&bandwidth=1"
             //TODO selectedArea to server
+            fetch(url, {
+                credentials: "include",
+                method: 'POST',
+                body: JSON.stringify(selectedCoorRange)
+            }).then(response => {
+                if (response.ok) {
+                    return response.json()
+                } else {
+                    resolve([year, null])
+                }
+            }).then(data => {
+                resolve([year, data])
+            })
 
         })
     }

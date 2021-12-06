@@ -1,9 +1,10 @@
 import {windChart} from "./windChart.js";
+import {updateMat} from "./corrMat.js";
 
 let singleLineChart = d3.select("#singleLineChart")
 let windContainer = d3.select("#windChart")
 
-export function showSelectedInfo(data) {
+export function showSelectedInfo(data, selectedCoorRange) {
     // console.log("selected area: " + d3Selected.size())
     // let data = d3Selected.data()
     let [min, max] = d3.extent(data, d => d.corrvalue)
@@ -44,8 +45,17 @@ export function showSelectedInfo(data) {
         windChart(filteredData, met_pol, windContainer.select("svg"))
     }
 
-    // TODO: update corrMat data里有啥 传经纬度吧
-    updateMat(window.currentInfo.year, data)
+    if (selectedCoorRange !== null) {
+        // TODO: update corrMat,
+        // data[i]:
+        // corrvalue: -0.6773748578
+        // elegroup: 1
+        // lat: 18.33
+        // lon: 109.52
+        // u: -0.0911872663
+        // v: -0.3063603565
+        updateMat(Window.currentInfo.year, selectedCoorRange)
+    }
 }
 
 function LineChart(data, {

@@ -273,7 +273,12 @@ export default class Map {
             let selectedData = selectedCircles.data()
             // this is brush
             renderElevationBar(selectedData, d3.select(".elevationBar"))
-            showSelectedInfo(selectedData)
+
+            let latRange = d3.extent(selectedData, d => d.lat)
+            let lonRange = d3.extent(selectedData, d => d.lon)
+
+            let selectionCoord = [latRange, lonRange];
+            showSelectedInfo(selectedData, selectionCoord)
         }
     }
 }

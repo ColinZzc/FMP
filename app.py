@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request
 from utils.data_engine import get_corrcoef_json, get_bucket_json, get_avg_pollution_json, get_kde_json
 from flask_cors import CORS
@@ -43,13 +45,16 @@ def avg_pollution():
     return get_avg_pollution_json(year)
 
 # for corrMat kde version
-@app.route('/kde', methods=['GET'])
+@app.route('/kde', methods=['GET', "POST"])
 def kde():
     feature = request.args.get("feature")
     year = request.args.get("year", default=2013)
     kernel = request.args.get("kernel", default="epanechnikov")
     bandwidth = request.args.get("bandwidth", default=0.1)
-    return get_kde_json(feature, year, kernel="epanechnikov", bandwidth=0.1)
+    selectedCoorRange = []
+    if request.method == 'POST':
+        selectedCoorRange = json.loads(request.data) # map 筛选的coords
+    return get_kde_json(feature, year, kernel=kernel, bandwidth=float(bandwidth), selectedCoorRange=selectedCoorRange)
 
 
 global engine

@@ -29,9 +29,10 @@ export function kde(data, year, met_pol, container) {
 
 
     // Create a Y scale for densities
+    let maxKDE = d3.max(data, d=>d3.max(d, d=>d))
     const y = d3.scaleLinear()
         //TODO: 调整kde高度
-        .domain([0, 4])
+        .domain([0, maxKDE*3])
         .range([height, 0]);
 
     // Create the Y axis for names
