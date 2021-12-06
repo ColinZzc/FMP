@@ -94,8 +94,8 @@ export default class Map {
         let L_json = "../resource/china.json";
 
         var svg = that._svg
-            .attr("width", that._width)
-            .attr("height", that._height)
+            // .attr("width", that._width)
+            // .attr("height", that._height)
             .attr("viewBox", [0, 0, that._width, that._height])
             .attr("style", "max-width: 100%; height: auto;")
 

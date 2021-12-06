@@ -1,7 +1,7 @@
 import {showOnMap} from "./chineseMap.js";
 
 export function kde(data, year, met_pol, container) {
-    const margin = {top: 50, right: 0, bottom: 30, left: 20},
+    const margin = {top: 50, right: 0, bottom: 30, left: 30},
         width = 160 - margin.left - margin.right,
         height = 200 - margin.top - margin.bottom;
 
@@ -54,8 +54,8 @@ export function kde(data, year, met_pol, container) {
     if (typeof svg == "undefined" || svg.empty()) {
         // append the svg object to the body of the page
         svg = container.append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
+            // .attr("width", width + margin.left + margin.right)
+            // .attr("height", height + margin.top + margin.bottom)
             .attr("viewBox", [0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom])
             .attr("class", year + " " + met_pol)
             .append("g")
