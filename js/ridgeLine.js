@@ -29,10 +29,10 @@ export function kde(data, year, met_pol, container) {
 
 
     // Create a Y scale for densities
-    let maxKDE = d3.max(data, d=>d3.max(d, d=>d))
+    let maxKDE = d3.max(data, d => d3.max(d, d => d))
     const y = d3.scaleLinear()
         //TODO: 调整kde高度
-        .domain([0, maxKDE*3])
+        .domain([0, maxKDE * 3])
         .range([height, 0]);
 
     // Create the Y axis for names
@@ -102,7 +102,6 @@ export function kde(data, year, met_pol, container) {
     container.select("svg").attr("class", year + " " + met_pol)
 
 
-
     // Compute kernel density estimation for each column:
     let allDensity = []
     for (let monthData of data) {
@@ -125,57 +124,59 @@ export function kde(data, year, met_pol, container) {
         .attr("transform", function (d, i) {
             return (`translate(0, ${(yName(categories[i]) - height)})`)
         })
-        .attr("fill",
-            d => {
-                // 最大值做颜色
-                let maxIndex = 0
-                for (let i = 0; i < d.length; i++) {
-                    if (d[i] > d[maxIndex]) {
-                        maxIndex = i
-                    }
-                }
-                return d3.interpolateRdBu(colorValueScale(dataIndex2width(maxIndex)))
-            }
-
-            // "url(#Gradient2)"
-
-            // function (d, i) {
-            //     //todo color
-            //     // grp = d.key;
-            //     // index = categories.indexOf(grp)
-            //     // value = allMeans[index] //每组均值
-            //     return myColor(50)
-            // }
-        )
+        // 不从左到右的出场动画，关注数值改变前后的变化
+        // .attr("fill",
+        //     d => {
+        //         // 最大值做颜色
+        //         let maxIndex = 0
+        //         for (let i = 0; i < d.length; i++) {
+        //             if (d[i] > d[maxIndex]) {
+        //                 maxIndex = i
+        //             }
+        //         }
+        //         return d3.interpolateRdBu(colorValueScale(dataIndex2width(maxIndex)))
+        //     }
+        //
+        //     // "url(#Gradient2)"
+        //
+        //     // function (d, i) {
+        //     //     //todo color
+        //     //     // grp = d.key;
+        //     //     // index = categories.indexOf(grp)
+        //     //     // value = allMeans[index] //每组均值
+        //     //     return myColor(50)
+        //     // }
+        // )
         // .datum(function (d) {
         //     return (d.density)
         // })
         .attr("opacity", 0.9)
         .attr("stroke", "#000")
         .attr("stroke-width", 0.5)
-        .attr("d",  data => {
-            let linGen = d3.line()
-                .curve(d3.curveBasis)
-                .x(function (d, i) {
-                    return x(-1);
-                })
-                .y(function (d) {
-                    return y(d);
-                })
-            let path = linGen(data)
-
-            // 添加maxLine
-
-            let maxVal = d3.max(data)
-            let index = data.indexOf(maxVal)
-            let x0 = x(-1);
-            let x1 = x(-1);
-            let y0 = y(0)
-            let y1 = y(maxVal)
-            let maxLineStr = `M${x0},${y0}L ${x1} ${y1}`
-
-            return path + maxLineStr
-        })
+        // 不从左到右的出场动画，关注数值改变前后的变化
+        // .attr("d",  data => {
+        //     let linGen = d3.line()
+        //         .curve(d3.curveBasis)
+        //         .x(function (d, i) {
+        //             return x(-1);
+        //         })
+        //         .y(function (d) {
+        //             return y(d);
+        //         })
+        //     let path = linGen(data)
+        //
+        //     // 添加maxLine
+        //
+        //     let maxVal = d3.max(data)
+        //     let index = data.indexOf(maxVal)
+        //     let x0 = x(-1);
+        //     let x1 = x(-1);
+        //     let y0 = y(0)
+        //     let y1 = y(maxVal)
+        //     let maxLineStr = `M${x0},${y0}L ${x1} ${y1}`
+        //
+        //     return path + maxLineStr
+        // })
         .on("pointerenter", pointerentered)
         .on("pointerleave", pointerleft)
         .on("touchstart", event => event.preventDefault())
@@ -239,6 +240,29 @@ export function kde(data, year, met_pol, container) {
 
             return path + maxLineStr
         })
+        // 数值前后变化
+        .attr("fill",
+            d => {
+                // 最大值做颜色
+                let maxIndex = 0
+                for (let i = 0; i < d.length; i++) {
+                    if (d[i] > d[maxIndex]) {
+                        maxIndex = i
+                    }
+                }
+                return d3.interpolateRdBu(colorValueScale(dataIndex2width(maxIndex)))
+            }
+
+            // "url(#Gradient2)"
+
+            // function (d, i) {
+            //     //todo color
+            //     // grp = d.key;
+            //     // index = categories.indexOf(grp)
+            //     // value = allMeans[index] //每组均值
+            //     return myColor(50)
+            // }
+        )
 
 }
 
