@@ -380,7 +380,7 @@ async function renderElevationBar(selectedData, container) {
     // .text("<--Correlation-->")
     let yLabel = container.selectAll(".yLabel")
         // .data([[""]])
-        .data([["8844 M", 0], ["4000", (height + paddingTop) / 2], ["0", height + paddingTop - 15]])
+        .data([["8848 M", 0], ["4000", (height + paddingTop) / 2], ["0", height + paddingTop - 15]])
     newEnder = yLabel.enter()
         .append("text")
     yLabel.merge(newEnder)
