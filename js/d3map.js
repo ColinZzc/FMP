@@ -184,7 +184,7 @@ export default class Map {
 
         circles.merge(new_circle)
             .transition()
-            .duration(500)
+            .duration(5000)
             .attr("fill", function (d) {
                 return d3.interpolateRdBu(linear(d["corrvalue"]))
             })

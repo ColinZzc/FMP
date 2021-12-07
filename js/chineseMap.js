@@ -27,7 +27,7 @@ export function updateTime() {
     let month = Window.currentInfo.month
     let met_pol = Window.currentInfo.met_pol.split("_")
 
-    let time = ""+year+" "+monthStr[month]
+    let time = ""+year+" "+monthStr[month-1]
     d3.select("#currentYear").text(time)
 
     let met = meterologyToFullName[met_pol[0]]
