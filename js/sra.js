@@ -9,7 +9,7 @@ export function sra(data, wid=150, hei=150) {
     let width = wid,
         height = hei,
         paddingButton = 40,
-        outerRadius = height / 2 - 20, //减小一些留给文字
+        outerRadius = height / 2 - 10, //减小一些留给文字
         innerRadius = 5;
     let angle = d3.scaleLinear().range([0, 2 * Math.PI]);
     let radius = d3.scaleLinear().range([innerRadius, outerRadius]);
@@ -62,7 +62,8 @@ export function sra(data, wid=150, hei=150) {
 
     radius.domain([
         0,
-        d3.max(layers[layers.length - 1], d => d[1])
+        // d3.max(layers[layers.length - 1], d => d[1])
+        5.3 // 六张图一样 对比大小 数据归一化过最大值1 六类污染物堆叠最大值6 //实际测得最大5.2+
     ]);
 
     svg
